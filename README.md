@@ -5,7 +5,7 @@ Provide type-safe query operations for AWS DynamoDB.
 ## Quick start
 
 ```sh
-npm i --save type-safe-dynamo
+npm i --save typesafe-dynamo
 ```
 
 ## Example
