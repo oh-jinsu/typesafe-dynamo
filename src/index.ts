@@ -1,11 +1,15 @@
 import { DynamoDB } from "aws-sdk";
+import { toCamelCase, toSnakeCase } from "./common";
 
+/**
+ * Every input types of [`DynamoDB`]
+ */
 type InputList = DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput | DynamoDB.PutItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput;
 
 /**
  * Default key names of an update date column and a create date column.
  */
-const DATE_KEY_LIST = ["updatedAt", "createdAt"] as const;
+const DATE_KEY_LIST = ["updated_at", "created_at"] as const;
 
 /**
  * Default type of an update date column and a create date column.
@@ -19,8 +23,8 @@ type DateKeyList = typeof DATE_KEY_LIST[number];
  */
 const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | never = never>(client: DynamoDB.DocumentClient, name: string) => {
   /**
-   * Return the specific entry of the item [`DynamoDB.*ItemInput`].
-   * It is possible to refer previous result by [`prev`] which may contain another properties in [`DynamoDB.*ItemInput`]
+   * Return the specific entry of the item input types.
+   * It is possible to refer previous result by [`prev`] which may contain another properties in input types.
    */
   type ReducerSlice<T extends InputList, U extends keyof T> = (prev: Partial<T>) => Pick<T, U>;
 
@@ -40,7 +44,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   const key =
     (params: Pick<Schema, PK>): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput, "Key"> =>
     () => ({
-      Key: params as any,
+      Key: toSnakeCase(params) as any,
     });
 
   /**
@@ -69,14 +73,14 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       ExpressionAttributeNames: Object.keys(params).reduce(
         (pre, cur) => ({
           ...pre,
-          [`#${cur}`]: cur,
+          [`#${cur}`]: cur.toSnakeCase(),
         }),
         ExpressionAttributeNames || {},
       ),
       ExpressionAttributeValues: Object.entries(params).reduce(
         (pre, [key, value]) => ({
           ...pre,
-          [`:${key}`]: value,
+          [`:${key.toSnakeCase()}`]: value,
         }),
         (ExpressionAttributeValues as any) || {},
       ),
@@ -107,7 +111,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       ExpressionAttributeNames: Object.keys(params).reduce(
         (pre, cur) => ({
           ...pre,
-          [`#${cur}`]: cur,
+          [`#${cur}`]: cur.toSnakeCase(),
         }),
         ExpressionAttributeNames || {},
       ),
@@ -143,7 +147,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       ExpressionAttributeNames: params.reduce(
         (pre, cur) => ({
           ...pre,
-          [`#${cur.toString()}`]: cur.toString(),
+          [`#${cur.toString()}`]: cur.toString().toSnakeCase(),
         }),
         ExpressionAttributeNames || {},
       ),
@@ -212,7 +216,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
 
   /**
    * Pass values incuding the partion key of the entity.
-   * It automatically adds `updatedAt` and `createdAt` properties.
+   * It automatically adds `updated_at` and `created_at` properties.
    *
    * ## Example
    * ```
@@ -230,15 +234,15 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
     ({ Item }) => ({
       Item: {
         ...(Item ?? {}),
-        ...(params as any),
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
+        ...toSnakeCase(params),
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       },
     });
 
   /**
    * Replace values of the entity.
-   * It automatically update the `updatedAt` property.
+   * It automatically update the `updated_at` property.
    * Note that it is not needed to use [`ExpressionAttributeNames`] and [`ExpressionAttributeValues`], because it does automatically.
    *
    * ## Example
@@ -259,14 +263,14 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       params: Partial<Omit<Schema, PK | DateKeyList>>,
     ): ReducerSlice<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
     ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
-      UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updatedAt = :updatedAt,"} ${Object.keys(params)
+      UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updated_at = :updated_at,"} ${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
         .join(", ")}`,
       ExpressionAttributeNames: Object.keys(params).reduce(
         (pre, cur) => ({
           ...pre,
-          [`#${cur}`]: cur,
-          "#updatedAt": "updatedAt",
+          [`#${cur}`]: cur.toSnakeCase(),
+          "#updated_at": "updated_at",
         }),
         ExpressionAttributeNames || {},
       ),
@@ -274,7 +278,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
         (pre, [key, value]) => ({
           ...pre,
           [`:${key}`]: value,
-          ":updatedAt": new Date().toISOString() as any,
+          ":updated_at": new Date().toISOString() as any,
         }),
         (ExpressionAttributeValues as any) || {},
       ),
@@ -289,10 +293,15 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * A argument type of the each operation function.
    *
    * The first generic parameter `T` should be a type of the argument builders, so that users can use them.
-   * The second generic paramter `U` should be one of the [`DynamoDB.*ItemInput`] types,
-   * so that users can even use still unsupported features of [`DynamoDB.*ItemInput`] as default.
+   * The second generic paramter `U` should be one of the input types,
+   * so that users can even use still unsupported features of input types as default.
    */
   type Query<T, U extends InputList> = (builders: T) => (Partial<U> | EverySlice<U, keyof U>)[];
+
+  /**
+   * Map the result entity from [`DynamoDB.DocumentClient`].
+   */
+  const mapper = (value: unknown): Schema => toCamelCase(value);
 
   const getBuilder = {
     key,
@@ -319,7 +328,11 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   const get = async (query: Query<typeof getBuilder, DynamoDB.GetItemInput>): Promise<Schema | undefined> => {
     const { Item } = await client.get(reduce(query, getBuilder)).promise();
 
-    return Item as Schema;
+    if (!Item) {
+      return;
+    }
+
+    return mapper(Item);
   };
 
   const queryBuilder = {
@@ -341,7 +354,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    * const result = await user.query(({ condition }) => [
    *   condition({
-   *     name: "jinsu",
+   *     age: 25,
    *   }),
    * ]);
    *
@@ -354,7 +367,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       return [];
     }
 
-    return Items as Schema[];
+    return Items.map(mapper);
   };
 
   const scanBuilder = {
@@ -388,7 +401,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       return [];
     }
 
-    return Items as Schema[];
+    return Items.map(mapper);
   };
 
   const putBuilder = {
@@ -470,10 +483,10 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   /**
    * Calculate reducers that an user has set.
    *
-   * Return the one of [`DynamoDB.*ItemInput`],
+   * Return the one of input types,
    * so that it can fit with the paramenter of the each operation from `DynamoDB.Client`.
    */
-  const reduce = <T, U extends InputList>(query: Query<T, U>, builders: T) =>
+  const reduce = <T, U extends InputList>(query: Query<T, U>, builders: T): U =>
     query(builders).reduce(
       (pre, cur) => {
         if (typeof cur === "function") {

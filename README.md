@@ -55,10 +55,10 @@ const result = await user.scan(() => [{
 Or you can even use some of features of this library.
 
 ```ts
-const result = await user.scan(({ limit }) => [
+const result = await user.scan(({ select }) => [
     {
         FilterExpression: "age >= 25",
     },
-    limit(3),
+    select("name"),
 ]);
 ```
