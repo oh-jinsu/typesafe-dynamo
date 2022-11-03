@@ -1,5 +1,5 @@
 {
-  "name": "typesafe-dynamodb",
+  "name": "typesafe-dynamo",
   "version": "0.1.0",
   "description": "Provide type-safe query operations for AWS DynamoDB.",
   "main": "lib/index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oh-jinsu/typesafe-dynamodb.git"
+    "url": "git+https://github.com/oh-jinsu/typesafe-dynamo.git"
   },
   "author": {
     "name": "ohjinsu",
@@ -19,9 +19,9 @@
   },
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/oh-jinsu/typesafe-dynamodb/issues"
+    "url": "https://github.com/oh-jinsu/typesafe-dynamo/issues"
   },
-  "homepage": "https://github.com/oh-jinsu/typesafe-dynamodb#readme",
+  "homepage": "https://github.com/oh-jinsu/typesafe-dynamo#readme",
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
     "@types/node": "^18.6.2",

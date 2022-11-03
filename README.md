@@ -1,18 +1,18 @@
-# typesafe-dynamodb
+# typesafe-dynamo
 
 Provide type-safe query operations for AWS DynamoDB.
 
 ## Quick start
 
 ```sh
-npm i --save typesafe-dynamodb
+npm i --save type-safe-dynamo
 ```
 
 ## Example
 
 ```ts
 import { DynamoDB } from "aws-sdk";
-import { tableOf } from "typesafe-dynamodb";
+import { typesafe } from "typesafe-dynamo";
 
 const client = new DynamoDB.DocumentClient({
     region: "ap-northeast-2",
@@ -24,7 +24,7 @@ interface User {
     age: number;
 }
 
-const user = tableOf<User, "id">(client, "user-test");
+const user = typesafe<User, "id">(client, "user-test");
 
 await user.put(({ values }) => [
     values({
