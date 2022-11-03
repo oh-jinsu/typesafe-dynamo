@@ -1,20 +1,28 @@
 import { DynamoDB } from "aws-sdk";
-import { DeleteItemInput } from "aws-sdk/clients/dynamodb";
+
+type InputList = DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput | DynamoDB.PutItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput;
+
+/**
+ * Default key names of an update date column and a create date column.
+ */
+const DATE_KEY_LIST = ["updatedAt", "createdAt"] as const;
+
+/**
+ * Default type of an update date column and a create date column.
+ */
+type DateKeyList = typeof DATE_KEY_LIST[number];
 
 /**
  * Provide type-safe query operations for [`DynamoDB.DocumentClient`].
  * The first generic parameter `T` receives a type, interface or class that represent the schema of table.
  * The second generic parameter `U` receives a `keyof T` as the partion key.
  */
-export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, name: string) => {
+const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | never = never>(client: DynamoDB.DocumentClient, name: string) => {
   /**
    * Return the specific entry of the item [`DynamoDB.*ItemInput`].
    * It is possible to refer previous result by [`prev`] which may contain another properties in [`DynamoDB.*ItemInput`]
    */
-  type Builder<
-    T extends DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput | DynamoDB.PutItemInput | DynamoDB.UpdateItemInput | DeleteItemInput,
-    U extends keyof T,
-  > = (prev: Partial<T>) => Partial<Pick<T, U>>;
+  type ReducerSlice<T extends InputList, U extends keyof T> = (prev: Partial<T>) => Pick<T, U>;
 
   /**
    * Pass the entry of the partion key.
@@ -30,35 +38,48 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    * ```
    */
   const key =
-    (params: Pick<T, U>): Builder<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DeleteItemInput, "Key"> =>
+    (params: Pick<Schema, PK>): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput, "Key"> =>
     () => ({
       Key: params as any,
     });
 
   /**
-   * Pass values incuding the partion key of the entity.
-   * It automatically adds `updatedAt` and `createdAt` properties.
-   *
+   * Pass the entry of the partion key or the sort key.
+   * Note that it is not needed to use [`ExpressionAttributeNames`] and [`ExpressionAttributeValues`], because it does automatically.
+   
    * ## Example
    * ```
-   * await user.put(({ values }) => [
-   *   values({
+   * const result = await user.query(({ condition }) => [
+   *   condition({
    *     id: 1,
-   *     name: "jinsu",
+   *     lastName: "Oh",
    *   }),
    * ]);
    *
    * ```
    */
-  const values =
-    (params: Omit<T, "createdAt" | "updatedAt">): Builder<DynamoDB.PutItemInput, "Item"> =>
-    ({ Item }) => ({
-      Item: {
-        ...(Item ?? {}),
-        ...(params as any),
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      },
+  const condition =
+    (
+      params: Partial<Pick<Schema, PK | SK>>,
+    ): ReducerSlice<DynamoDB.QueryInput, "KeyConditionExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
+    ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
+      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(params)
+        .map((key) => `#${key} = :${key}`)
+        .join(" and ")}`,
+      ExpressionAttributeNames: Object.keys(params).reduce(
+        (pre, cur) => ({
+          ...pre,
+          [`#${cur}`]: cur,
+        }),
+        ExpressionAttributeNames || {},
+      ),
+      ExpressionAttributeValues: Object.entries(params).reduce(
+        (pre, [key, value]) => ({
+          ...pre,
+          [`:${key}`]: value,
+        }),
+        (ExpressionAttributeValues as any) || {},
+      ),
     });
 
   /**
@@ -77,8 +98,8 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    */
   const filter =
     (
-      params: Partial<Omit<T, U>>,
-    ): Builder<DynamoDB.QueryInput | DynamoDB.ScanInput, "FilterExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
+      params: Partial<Omit<Schema, PK>>,
+    ): ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "FilterExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
     ({ FilterExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
       FilterExpression: `${FilterExpression ? `${FilterExpression} and ` : ""}${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
@@ -100,26 +121,6 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
     });
 
   /**
-   * Limit the maximum count of result elements.
-   *
-   * ## Example
-   * ```
-   * const result = await user.scan(({ filter, limit }) => [
-   *   filter({
-   *     age: 25,
-   *   }),
-   *   limit(1),
-   * ]);
-   *
-   * ```
-   */
-  const limit =
-    (params: number): Builder<DynamoDB.QueryInput | DynamoDB.ScanInput, "Limit"> =>
-    () => ({
-      Limit: params,
-    });
-
-  /**
    * Select properties of the entity to read.
    *
    * ## Example
@@ -134,9 +135,105 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    * ```
    */
   const select =
-    (...params: (keyof T)[]): Builder<DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput, "AttributesToGet"> =>
-    ({ AttributesToGet }) => ({
-      AttributesToGet: [...(AttributesToGet || []), ...params.map((arg) => arg.toString())],
+    (
+      ...params: (keyof Schema)[]
+    ): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput, "ProjectionExpression" | "ExpressionAttributeNames"> =>
+    ({ ProjectionExpression, ExpressionAttributeNames }) => ({
+      ProjectionExpression: `${ProjectionExpression ? `${ProjectionExpression} ` : ""}${params.map((param) => `#${param.toString()}`).join(", ")}`,
+      ExpressionAttributeNames: params.reduce(
+        (pre, cur) => ({
+          ...pre,
+          [`#${cur.toString()}`]: cur.toString(),
+        }),
+        ExpressionAttributeNames || {},
+      ),
+    });
+
+  /**
+   * Set the index of the schema.
+   *
+   * ## Example
+   * ```
+   * const result = await user.query(({ condition, index }) => [
+   *   index("NameAndAgeIndex")
+   *   condition({
+   *     age: 25,
+   *   }),
+   * ]);
+   *
+   * ```
+   */
+  const index =
+    (params: string): ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "IndexName"> =>
+    () => ({
+      IndexName: params,
+    });
+
+  /**
+   * Limit the maximum count of result elements.
+   *
+   * ## Example
+   * ```
+   * const result = await user.scan(({ filter, limit }) => [
+   *   filter({
+   *     age: 25,
+   *   }),
+   *   limit(1),
+   * ]);
+   *
+   * ```
+   */
+  const limit =
+    (params: number): ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "Limit"> =>
+    () => ({
+      Limit: params,
+    });
+
+  /**
+   * Set the direction of quering.
+   *
+   * ## Example
+   * ```
+   * const result = await user.query(({ condition, direction }) => [
+   *   condition({
+   *     id: 1,
+   *     lastName: "Oh",
+   *   }),
+   *   direction("FORWARD")
+   * ]);
+   *
+   * ```
+   */
+  const direction =
+    (params: "FORWARD" | "BACKWARD"): ReducerSlice<DynamoDB.QueryInput, "ScanIndexForward"> =>
+    () => ({
+      ScanIndexForward: params === "FORWARD",
+    });
+
+  /**
+   * Pass values incuding the partion key of the entity.
+   * It automatically adds `updatedAt` and `createdAt` properties.
+   *
+   * ## Example
+   * ```
+   * await user.put(({ values }) => [
+   *   values({
+   *     id: 1,
+   *     name: "jinsu",
+   *   }),
+   * ]);
+   *
+   * ```
+   */
+  const values =
+    (params: Omit<Schema, DateKeyList>): ReducerSlice<DynamoDB.PutItemInput, "Item"> =>
+    ({ Item }) => ({
+      Item: {
+        ...(Item ?? {}),
+        ...(params as any),
+        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      },
     });
 
   /**
@@ -159,8 +256,8 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    */
   const replace =
     (
-      params: Partial<Omit<T, U | "updatedAt" | "createdAt">>,
-    ): Builder<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
+      params: Partial<Omit<Schema, PK | DateKeyList>>,
+    ): ReducerSlice<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
     ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
       UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updatedAt = :updatedAt,"} ${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
@@ -184,10 +281,9 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
     });
 
   /**
-   * If it is an object, then the reduce function should override the previous input item by it directly.
-   * If it is a function, It means it is the one of argument builders. Then override the previous input item by the result of this reducer.
+   * Iterate every possible input slices.
    */
-  type Reducer<Input> = Partial<Input> | ((prev: Partial<Input>) => Partial<Input>);
+  type EverySlice<T, U> = T extends InputList ? (U extends keyof T ? ReducerSlice<T, U> : never) : never;
 
   /**
    * A argument type of the each operation function.
@@ -196,7 +292,7 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    * The second generic paramter `U` should be one of the [`DynamoDB.*ItemInput`] types,
    * so that users can even use still unsupported features of [`DynamoDB.*ItemInput`] as default.
    */
-  type Query<T, U> = (argsBuilder: T) => Reducer<U>[];
+  type Query<T, U extends InputList> = (builders: T) => (Partial<U> | EverySlice<U, keyof U>)[];
 
   const getBuilder = {
     key,
@@ -220,21 +316,58 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    *
    * ```
    */
-  const get = async (query: Query<typeof getBuilder, DynamoDB.GetItemInput>): Promise<T | undefined> => {
+  const get = async (query: Query<typeof getBuilder, DynamoDB.GetItemInput>): Promise<Schema | undefined> => {
     const { Item } = await client.get(reduce(query, getBuilder)).promise();
 
-    return Item as T;
+    return Item as Schema;
+  };
+
+  const queryBuilder = {
+    index,
+    condition,
+    filter,
+    select,
+    limit,
+    direction,
+  };
+
+  /**
+   * A wrapper function for the `DynamoDB.DocumentClient.query`.
+   *
+   * Find entities by the partion key and the sort key.
+   * Return an array as the type of the entities that is provided from the schema.
+   *
+   * ## Example
+   * ```
+   * const result = await user.query(({ condition }) => [
+   *   condition({
+   *     name: "jinsu",
+   *   }),
+   * ]);
+   *
+   * ```
+   */
+  const query = async (query: Query<typeof queryBuilder, DynamoDB.QueryInput>): Promise<Schema[]> => {
+    const { Items } = await client.query(reduce(query, queryBuilder)).promise();
+
+    if (!Items) {
+      return [];
+    }
+
+    return Items as Schema[];
   };
 
   const scanBuilder = {
+    index,
     filter,
+    select,
     limit,
   };
 
   /**
    * A wrapper function for the `DynamoDB.DocumentClient.scan`.
    *
-   * Find an entity by its fields except the partion key.
+   * Find entities by the fields except the partion key.
    * Return an array as the type of the entities that is provided from the schema.
    *
    * ## Example
@@ -248,14 +381,14 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    *
    * ```
    */
-  const scan = async (query: Query<typeof scanBuilder, DynamoDB.ScanInput>): Promise<T[]> => {
+  const scan = async (query: Query<typeof scanBuilder, DynamoDB.ScanInput>): Promise<Schema[]> => {
     const { Items } = await client.scan(reduce(query, scanBuilder)).promise();
 
     if (!Items) {
       return [];
     }
 
-    return Items as T[];
+    return Items as Schema[];
   };
 
   const putBuilder = {
@@ -340,7 +473,7 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
    * Return the one of [`DynamoDB.*ItemInput`],
    * so that it can fit with the paramenter of the each operation from `DynamoDB.Client`.
    */
-  const reduce = <Builder, Input>(query: Query<Builder, Input>, builders: Builder) =>
+  const reduce = <T, U extends InputList>(query: Query<T, U>, builders: T) =>
     query(builders).reduce(
       (pre, cur) => {
         if (typeof cur === "function") {
@@ -356,9 +489,12 @@ export const typesafe = <T, U extends keyof T>(client: DynamoDB.DocumentClient, 
 
   return {
     get,
+    query,
     scan,
     put,
     update,
     remove,
   };
 };
+
+export default typesafe;

@@ -12,7 +12,7 @@ npm i --save typesafe-dynamo
 
 ```ts
 import { DynamoDB } from "aws-sdk";
-import { typesafe } from "typesafe-dynamo";
+import typesafe from "typesafe-dynamo";
 
 const client = new DynamoDB.DocumentClient({
     region: "ap-northeast-2",
@@ -24,7 +24,7 @@ interface User {
     age: number;
 }
 
-const talbe = typesafe<User, "id">(client, "user");
+const table = typesafe<User, "id">(client, "user");
 
 await table.put(({ values }) => [
     values({
