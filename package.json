@@ -1,6 +1,6 @@
 {
   "name": "typesafe-dynamo",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Provide type-safe query operations for AWS DynamoDB.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -17,7 +17,7 @@
     "email": "ohjinsu@codersproduct.com",
     "url": "https://ohjinsu.me"
   },
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/oh-jinsu/typesafe-dynamo/issues"
   },
