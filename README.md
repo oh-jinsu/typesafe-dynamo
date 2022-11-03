@@ -24,9 +24,9 @@ interface User {
     age: number;
 }
 
-const user = typesafe<User, "id">(client, "user-test");
+const talbe = typesafe<User, "id">(client, "user");
 
-await user.put(({ values }) => [
+await table.put(({ values }) => [
     values({
         id: "0000",
         name: "jinsu",
@@ -34,7 +34,7 @@ await user.put(({ values }) => [
     }),
 ]);
 
-const result = await user.get(({ key }) => [
+const result = await table.get(({ key }) => [
     key({
         id: "0000",
     }),
