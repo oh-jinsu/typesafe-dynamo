@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { toCamelCase, toSnakeCase } from "./common";
+import { map } from "./common";
 
 /**
  * Every input types of [`DynamoDB`]
@@ -9,7 +9,7 @@ type InputList = DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInpu
 /**
  * Default key names of an update date column and a create date column.
  */
-const DATE_KEY_LIST = ["updated_at", "created_at"] as const;
+const DATE_KEY_LIST = ["updatedAt", "createdAt"] as const;
 
 /**
  * Default type of an update date column and a create date column.
@@ -22,6 +22,79 @@ type DateKeyList = typeof DATE_KEY_LIST[number];
  * The second generic parameter `U` receives a `keyof T` as the partion key.
  */
 const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | never = never>(client: DynamoDB.DocumentClient, name: string) => {
+  /**
+   * Map a value to the form that is acceptable for [`DynamoDB.DocumentClient`]
+   */
+  const toAcceptable = (value: unknown): any => {
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    return value;
+  };
+
+  /**
+   * Map an object to the form that is acceptable for [`DynamoDB.DocumentClient`]
+   * It affects the way to write a data in table.
+   */
+  const mapAcceptable = map<string, any>(([key, value]) => [key.toSnakeCase(), toAcceptable(value)]);
+
+  /**
+   * Add the `#` preffix to passed value. This function is idempotent.
+   */
+  const preffixAttributeName = (value: string): string => {
+    const preffix = "#";
+
+    if (value.startsWith(preffix)) {
+      return value;
+    }
+
+    return `${preffix}${value}`;
+  };
+
+  /**
+   * Map an object to the form that is acceptable for [`ExpressionAttributeNames`]
+   * It affects the way to read a table.
+   */
+  const mapAttributeNames = map<string, string>(([key, value]) => [preffixAttributeName(key), value.toSnakeCase()]);
+
+  /**
+   * Add the `:` preffix to passed value. This function is idempotent.
+   */
+  const preffixAttributeValue = (value: string): string => {
+    const preffix = ":";
+
+    if (value.startsWith(preffix)) {
+      return value;
+    }
+
+    return `${preffix}${value}`;
+  };
+
+  /**
+   * Map an object to the form that is acceptable for [`ExpressionAttributeValues`]
+   * It affects the way to read a table.
+   */
+  const mapAttrubuteValues = map<string, any>(([key, value]) => [preffixAttributeValue(key), toAcceptable(value)]);
+
+  /**
+   * Map a value to the form that is useful for user.
+   */
+  const toUseful = (value: unknown): any => {
+    if (typeof value === "string") {
+      if (!Number.isNaN(Date.parse(value))) {
+        return new Date(value);
+      }
+    }
+
+    return value;
+  };
+
+  /**
+   * Map an object to the form that is useful for user.
+   */
+  const mapUseful = map(([key, value]) => [key.toCamelCase(), toUseful(value)]);
+
   /**
    * Return the specific entry of the item input types.
    * It is possible to refer previous result by [`prev`] which may contain another properties in input types.
@@ -44,7 +117,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   const key =
     (params: Pick<Schema, PK>): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput, "Key"> =>
     () => ({
-      Key: toSnakeCase(params) as any,
+      Key: mapAcceptable(params),
     });
 
   /**
@@ -70,20 +143,19 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
         .join(" and ")}`,
-      ExpressionAttributeNames: Object.keys(params).reduce(
-        (pre, cur) => ({
-          ...pre,
-          [`#${cur}`]: cur.toSnakeCase(),
-        }),
-        ExpressionAttributeNames || {},
+      ExpressionAttributeNames: mapAttributeNames(
+        Object.keys(params).reduce(
+          (pre, cur) => ({
+            ...pre,
+            [cur]: cur,
+          }),
+          ExpressionAttributeNames || {},
+        ),
       ),
-      ExpressionAttributeValues: Object.entries(params).reduce(
-        (pre, [key, value]) => ({
-          ...pre,
-          [`:${key.toSnakeCase()}`]: value,
-        }),
-        (ExpressionAttributeValues as any) || {},
-      ),
+      ExpressionAttributeValues: mapAttrubuteValues({
+        ...ExpressionAttributeValues,
+        ...params,
+      }),
     });
 
   /**
@@ -108,20 +180,19 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       FilterExpression: `${FilterExpression ? `${FilterExpression} and ` : ""}${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
         .join(" and ")}`,
-      ExpressionAttributeNames: Object.keys(params).reduce(
-        (pre, cur) => ({
-          ...pre,
-          [`#${cur}`]: cur.toSnakeCase(),
-        }),
-        ExpressionAttributeNames || {},
+      ExpressionAttributeNames: mapAttributeNames(
+        Object.keys(params).reduce(
+          (pre, cur) => ({
+            ...pre,
+            [cur]: cur,
+          }),
+          ExpressionAttributeNames || {},
+        ),
       ),
-      ExpressionAttributeValues: Object.entries(params).reduce(
-        (pre, [key, value]) => ({
-          ...pre,
-          [`:${key}`]: value,
-        }),
-        (ExpressionAttributeValues as any) || {},
-      ),
+      ExpressionAttributeValues: mapAttrubuteValues({
+        ...ExpressionAttributeValues,
+        ...params,
+      }),
     });
 
   /**
@@ -144,12 +215,14 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
     ): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.QueryInput | DynamoDB.ScanInput, "ProjectionExpression" | "ExpressionAttributeNames"> =>
     ({ ProjectionExpression, ExpressionAttributeNames }) => ({
       ProjectionExpression: `${ProjectionExpression ? `${ProjectionExpression} ` : ""}${params.map((param) => `#${param.toString()}`).join(", ")}`,
-      ExpressionAttributeNames: params.reduce(
-        (pre, cur) => ({
-          ...pre,
-          [`#${cur.toString()}`]: cur.toString().toSnakeCase(),
-        }),
-        ExpressionAttributeNames || {},
+      ExpressionAttributeNames: mapAttributeNames(
+        params.reduce(
+          (pre, cur) => ({
+            ...pre,
+            [cur]: cur.toString(),
+          }),
+          ExpressionAttributeNames || {},
+        ),
       ),
     });
 
@@ -232,12 +305,12 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   const values =
     (params: Omit<Schema, DateKeyList>): ReducerSlice<DynamoDB.PutItemInput, "Item"> =>
     ({ Item }) => ({
-      Item: {
+      Item: mapAcceptable({
         ...(Item ?? {}),
-        ...toSnakeCase(params),
-        updated_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      },
+        ...params,
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      }),
     });
 
   /**
@@ -263,24 +336,28 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       params: Partial<Omit<Schema, PK | DateKeyList>>,
     ): ReducerSlice<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues"> =>
     ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
-      UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updated_at = :updated_at,"} ${Object.keys(params)
+      UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updatedAt = :updatedAt,"} ${Object.keys(params)
         .map((key) => `#${key} = :${key}`)
         .join(", ")}`,
-      ExpressionAttributeNames: Object.keys(params).reduce(
-        (pre, cur) => ({
-          ...pre,
-          [`#${cur}`]: cur.toSnakeCase(),
-          "#updated_at": "updated_at",
-        }),
-        ExpressionAttributeNames || {},
+      ExpressionAttributeNames: mapAttributeNames(
+        Object.keys(params).reduce(
+          (pre, cur) => ({
+            ...pre,
+            [cur]: cur,
+            updatedAt: "updated_at",
+          }),
+          ExpressionAttributeNames || {},
+        ),
       ),
-      ExpressionAttributeValues: Object.entries(params).reduce(
-        (pre, [key, value]) => ({
-          ...pre,
-          [`:${key}`]: value,
-          ":updated_at": new Date().toISOString() as any,
-        }),
-        (ExpressionAttributeValues as any) || {},
+      ExpressionAttributeValues: mapAttrubuteValues(
+        Object.entries(params).reduce(
+          (pre, [key, value]) => ({
+            ...pre,
+            [key]: value,
+            updatedAt: new Date(),
+          }),
+          (ExpressionAttributeValues as any) || {},
+        ),
       ),
     });
 
@@ -297,11 +374,6 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * so that users can even use still unsupported features of input types as default.
    */
   type Query<T, U extends InputList> = (builders: T) => (Partial<U> | EverySlice<U, keyof U>)[];
-
-  /**
-   * Map the result entity from [`DynamoDB.DocumentClient`].
-   */
-  const mapper = (value: unknown): Schema => toCamelCase(value);
 
   const getBuilder = {
     key,
@@ -332,7 +404,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       return;
     }
 
-    return mapper(Item);
+    return mapUseful(Item);
   };
 
   const queryBuilder = {
@@ -367,7 +439,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       return [];
     }
 
-    return Items.map(mapper);
+    return mapUseful(Items);
   };
 
   const scanBuilder = {
@@ -401,7 +473,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
       return [];
     }
 
-    return Items.map(mapper);
+    return mapUseful(Items);
   };
 
   const putBuilder = {
