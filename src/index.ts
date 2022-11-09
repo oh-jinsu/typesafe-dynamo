@@ -16,12 +16,20 @@ const DATE_KEY_LIST = ["updatedAt", "createdAt"] as const;
  */
 type DateKeyList = typeof DATE_KEY_LIST[number];
 
+type Options = {
+  logger?: (message: any) => void;
+};
+
 /**
  * Provide type-safe query operations for [`DynamoDB.DocumentClient`].
  * The first generic parameter `T` receives a type, interface or class that represent the schema of table.
  * The second generic parameter `U` receives a `keyof T` as the partion key.
  */
-const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | never = never>(client: DynamoDB.DocumentClient, name: string) => {
+const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | never = never>(
+  client: DynamoDB.DocumentClient,
+  name: string,
+  options?: Options,
+) => {
   /**
    * Map a value to the form that is acceptable for [`DynamoDB.DocumentClient`]
    */
@@ -375,6 +383,33 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    */
   type Query<T, U extends InputList> = (builders: T) => (Partial<U> | EverySlice<U, keyof U>)[];
 
+  /**
+   * Calculate reducers that an user has set.
+   *
+   * Return the one of input types,
+   * so that it can fit with the paramenter of the each operation from `DynamoDB.Client`.
+   */
+  const params = <T, U extends InputList>(query: Query<T, U>, builders: T): U => {
+    const result = query(builders).reduce(
+      (pre, cur) => {
+        if (typeof cur === "function") {
+          return { ...pre, ...cur(pre) };
+        }
+
+        return { ...pre, ...cur };
+      },
+      {
+        TableName: name,
+      } as any,
+    );
+
+    if (options?.logger) {
+      options.logger(result);
+    }
+
+    return result;
+  };
+
   const getBuilder = {
     key,
     select,
@@ -398,7 +433,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const get = async (query: Query<typeof getBuilder, DynamoDB.GetItemInput>): Promise<Schema | undefined> => {
-    const { Item } = await client.get(reduce(query, getBuilder)).promise();
+    const { Item } = await client.get(params(query, getBuilder)).promise();
 
     if (!Item) {
       return;
@@ -433,7 +468,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const query = async (query: Query<typeof queryBuilder, DynamoDB.QueryInput>): Promise<Schema[]> => {
-    const { Items } = await client.query(reduce(query, queryBuilder)).promise();
+    const { Items } = await client.query(params(query, queryBuilder)).promise();
 
     if (!Items) {
       return [];
@@ -467,7 +502,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const scan = async (query: Query<typeof scanBuilder, DynamoDB.ScanInput>): Promise<Schema[]> => {
-    const { Items } = await client.scan(reduce(query, scanBuilder)).promise();
+    const { Items } = await client.scan(params(query, scanBuilder)).promise();
 
     if (!Items) {
       return [];
@@ -499,7 +534,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const put = async (query: Query<typeof putBuilder, DynamoDB.PutItemInput>): Promise<void> => {
-    await client.put(reduce(query, putBuilder)).promise();
+    await client.put(params(query, putBuilder)).promise();
   };
 
   const updateBuilder = {
@@ -526,7 +561,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const update = async (query: Query<typeof updateBuilder, DynamoDB.UpdateItemInput>): Promise<void> => {
-    await client.update(reduce(query, updateBuilder)).promise();
+    await client.update(params(query, updateBuilder)).promise();
   };
 
   const removeBuilder = {
@@ -549,28 +584,8 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const remove = async (query: Query<typeof removeBuilder, DynamoDB.DeleteItemInput>): Promise<void> => {
-    await client.delete(reduce(query, updateBuilder)).promise();
+    await client.delete(params(query, updateBuilder)).promise();
   };
-
-  /**
-   * Calculate reducers that an user has set.
-   *
-   * Return the one of input types,
-   * so that it can fit with the paramenter of the each operation from `DynamoDB.Client`.
-   */
-  const reduce = <T, U extends InputList>(query: Query<T, U>, builders: T): U =>
-    query(builders).reduce(
-      (pre, cur) => {
-        if (typeof cur === "function") {
-          return { ...pre, ...cur(pre) };
-        }
-
-        return { ...pre, ...cur };
-      },
-      {
-        TableName: name,
-      } as any,
-    );
 
   return {
     get,
