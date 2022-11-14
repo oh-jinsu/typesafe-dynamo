@@ -129,7 +129,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    * ```
    */
   const key =
-    (params: Pick<Schema, PK>): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput, "Key"> =>
+    (params: Pick<Schema, PK | SK>): ReducerSlice<DynamoDB.GetItemInput | DynamoDB.UpdateItemInput | DynamoDB.DeleteItemInput, "Key"> =>
     () => ({
       Key: mapAcceptable(params),
     });
