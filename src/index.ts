@@ -18,6 +18,8 @@ type DateKeyList = typeof DATE_KEY_LIST[number];
 
 type Options = {
   logger?: (message: any) => void;
+  toDateString?: (value: Date) => string;
+  fromDateString?: (value: string) => Date;
 };
 
 /**
@@ -30,12 +32,16 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   name: string,
   options?: Options,
 ) => {
+  const toDateString = options?.toDateString || ((value) => value.toISOString());
+
+  const fromDateString = options?.fromDateString || ((value) => new Date(value));
+
   /**
    * Map a value to the form that is acceptable for [`DynamoDB.DocumentClient`]
    */
   const toAcceptable = (value: unknown): any => {
     if (value instanceof Date) {
-      return value.toISOString();
+      return toDateString(value);
     }
 
     return value;
@@ -91,7 +97,7 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
   const toUseful = (value: unknown): any => {
     if (typeof value === "string") {
       if (!Number.isNaN(Date.parse(value))) {
-        return new Date(value);
+        return fromDateString(value);
       }
     }
 
@@ -598,3 +604,5 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
 };
 
 export default typesafe;
+
+console.log(new Date().toLocaleString());
