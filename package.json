@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "test": "rm -rf lib && tsc && node lib/test.js",
-    "deploy": "npmi && rm -rf lib && tsc -d && npm publish"
+    "deploy": "npm i && rm -rf lib && tsc -d && npm publish"
   },
   "repository": {
     "type": "git",
