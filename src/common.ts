@@ -36,7 +36,7 @@ export const map =
     }
 
     if (Array.isArray(value)) {
-      return value.map(mapCamelCase);
+      return value.map(map(mapper));
     }
 
     if (value.constructor === Object) {
