@@ -539,8 +539,10 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    *
    * ```
    */
-  const put = async (query: Query<typeof putBuilder, DynamoDB.PutItemInput>): Promise<void> => {
-    await client.put(params(query, putBuilder)).promise();
+  const put = async (query: Query<typeof putBuilder, DynamoDB.PutItemInput>): Promise<Schema> => {
+    const { Attributes } = await client.put(params(query, putBuilder)).promise();
+
+    return mapUseful(Attributes);
   };
 
   const updateBuilder = {
@@ -566,8 +568,10 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
    *
    * ```
    */
-  const update = async (query: Query<typeof updateBuilder, DynamoDB.UpdateItemInput>): Promise<void> => {
-    await client.update(params(query, updateBuilder)).promise();
+  const update = async (query: Query<typeof updateBuilder, DynamoDB.UpdateItemInput>): Promise<Schema> => {
+    const { Attributes } = await client.update(params(query, updateBuilder)).promise();
+
+    return mapUseful(Attributes);
   };
 
   const removeBuilder = {
@@ -604,5 +608,3 @@ const typesafe = <Schema, PK extends keyof Schema, SK extends keyof Schema | nev
 };
 
 export default typesafe;
-
-console.log(new Date().toLocaleString());
