@@ -1,19 +1,18 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: "tsconfig.json",
+    project: ["tsconfig.json", "tsconfig.test.json"],
     sourceType: "module",
   },
   plugins: ["@typescript-eslint/eslint-plugin"],
-  extends: ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+  extends: ["plugin:@typescript-eslint/recommended", "prettier"],
   root: true,
   env: {
     node: true,
     jest: true,
   },
-  ignorePatterns: [".eslintrc.js", "babel.config.js", "jest.config.js"],
+  ignorePatterns: ["*.js", "lib/*"],
   rules: {
-    "prettier/prettier": ["error", { singleQuote: false }],
     quotes: ["error", "double"],
     "@typescript-eslint/no-unused-vars": ["error"],
     "@typescript-eslint/interface-name-prefix": "off",
