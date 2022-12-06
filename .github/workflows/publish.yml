@@ -16,6 +16,13 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - run: npm i
 
       - run: npm run test
