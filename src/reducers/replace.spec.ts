@@ -1,4 +1,4 @@
-import { replaceConstructor } from "./replace";
+import { mockReplaceReducer, replaceConstructor } from "./replace";
 
 describe("ReplaceReducer", () => {
   type User = {
@@ -59,5 +59,19 @@ describe("ReplaceReducer", () => {
     expect(result.ExpressionAttributeValues?.[":age"]).toBe(25);
 
     expect(result.ExpressionAttributeValues?.[":updatedAt"]).toBeDefined();
+  });
+});
+
+describe("ReplaceReducer", () => {
+  test("should parse", () => {
+    const result = mockReplaceReducer({
+      id: "uuid",
+    })({});
+
+    expect(result).toStrictEqual({
+      replace: {
+        id: "uuid",
+      },
+    });
   });
 });

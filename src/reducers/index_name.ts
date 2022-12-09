@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { ReducerSlice } from "../types/reducer";
+import { MockReducer, ReducerSlice } from "../types/reducer";
 
 export type IndexNameReducer = (params: string) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "IndexName">;
 
@@ -20,5 +20,13 @@ export type IndexNameReducer = (params: string) => ReducerSlice<DynamoDB.QueryIn
 export function indexNameConstructor(): IndexNameReducer {
   return (params) => () => ({
     IndexName: params,
+  });
+}
+
+export type MockIndexNameReducer = MockReducer<IndexNameReducer, "indexName">;
+
+export function mockIndexNameReducer(...[params]: Parameters<MockIndexNameReducer>): ReturnType<MockIndexNameReducer> {
+  return () => ({
+    indexName: params,
   });
 }

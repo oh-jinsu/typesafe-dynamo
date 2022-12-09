@@ -1,6 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { InputList } from "./input_list";
-import { Query } from "./query";
+import { Builder } from "./builder";
+import { AnyReducer } from "./reducer";
 
 export type OperationOption = {
   toDateString?: (value: Date) => string;
@@ -9,4 +10,4 @@ export type OperationOption = {
 
 export type OperationProps = [client: DynamoDB.DocumentClient, name: string, option?: OperationOption];
 
-export type Operation<Builder, Input extends InputList, Result> = (query: Query<Builder, Input>) => Promise<Result>;
+export type Operation<T extends Record<string, AnyReducer>, Input extends InputList, Result> = (builder: Builder<T, Input>) => Promise<Result>;

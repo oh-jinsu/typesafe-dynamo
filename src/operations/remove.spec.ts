@@ -1,7 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { getConstructor } from "./get";
 import { putConstructor } from "./put";
-import { removeConstructor } from "./remove";
+import { buildMockRemove, removeConstructor, RemoveOperation } from "./remove";
 import { updateConstructor } from "./update";
 
 describe("Put/Update/Remove operation", () => {
@@ -60,5 +60,31 @@ describe("Put/Update/Remove operation", () => {
     ]);
 
     expect(result).toBeUndefined();
+  });
+});
+
+describe("BuildMockRemove", () => {
+  type User = {
+    id: string;
+    name: string;
+    age: number;
+    createdAt: Date;
+  };
+
+  type TestOperation = RemoveOperation<User, "id", never>;
+
+  test("should return the passed id", async () => {
+    const remove = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
+
+    remove.mockImplementation(buildMockRemove(() => undefined));
+
+    const promise = () =>
+      remove(({ key }) => [
+        key({
+          id: "uuid",
+        }),
+      ]);
+
+    expect(promise).not.toThrow();
   });
 });

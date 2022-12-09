@@ -1,17 +1,18 @@
 import { DynamoDB } from "aws-sdk";
 import { usefulObjectMapper } from "../mappers/useful";
-import { keyConstructor, KeyReducer } from "../reducers/key";
-import { replaceConstructor, ReplaceReducer } from "../reducers/replace";
+import { keyConstructor, KeyReducer, mockKeyReducer } from "../reducers/key";
+import { mockReplaceReducer, replaceConstructor, ReplaceReducer } from "../reducers/replace";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { MockBuilderIntepreter } from "../types/builder";
 
-export type UpdateBuilder<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
+export type UpdateReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
   replace: ReplaceReducer<Schema, PK, SK>;
 };
 
 export type UpdateOperation<Schema, PK extends keyof Schema, SK extends keyof Schema> = Operation<
-  UpdateBuilder<Schema, PK, SK>,
+  UpdateReducers<Schema, PK, SK>,
   DynamoDB.UpdateItemInput,
   Schema
 >;
@@ -19,7 +20,7 @@ export type UpdateOperation<Schema, PK extends keyof Schema, SK extends keyof Sc
 export function updateConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>(
   ...[client, name, option]: OperationProps
 ): UpdateOperation<Schema, PK, SK> {
-  return async (query) => {
+  return async (reducers) => {
     const toDateString = option?.toDateString ?? ((value) => value.toISOString());
 
     const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
@@ -28,7 +29,7 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
 
     const replace = replaceConstructor<Schema, PK, SK>({ toDateString });
 
-    const params = query({
+    const params = reducers({
       key,
       replace,
     }).reduce(fold, {
@@ -39,5 +40,18 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
     const { Attributes } = await client.update(params).promise();
 
     return usefulObjectMapper(fromDateString)(Attributes);
+  };
+}
+
+export function buildMockUpdate<Schema, PK extends keyof Schema, SK extends keyof Schema>(
+  ...[fn]: Parameters<MockBuilderIntepreter<UpdateOperation<Schema, PK, SK>>>
+): ReturnType<MockBuilderIntepreter<UpdateOperation<Schema, PK, SK>>> {
+  return async (builder) => {
+    const params = builder({
+      key: mockKeyReducer,
+      replace: mockReplaceReducer,
+    } as any).reduce(fold, {});
+
+    return fn(params);
   };
 }

@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { ReducerSlice } from "../types/reducer";
+import { MockReducer, ReducerSlice } from "../types/reducer";
 
 export type DirectionReducer = (params: "FORWARD" | "BACKWARD") => ReducerSlice<DynamoDB.QueryInput, "ScanIndexForward">;
 
@@ -21,5 +21,13 @@ export type DirectionReducer = (params: "FORWARD" | "BACKWARD") => ReducerSlice<
 export function directionConstructor(): DirectionReducer {
   return (params) => () => ({
     ScanIndexForward: params === "FORWARD",
+  });
+}
+
+export type MockDirectionReducer = MockReducer<DirectionReducer, "direction">;
+
+export function mockDirectionReducer(...[params]: Parameters<MockDirectionReducer>): ReturnType<MockDirectionReducer> {
+  return () => ({
+    direction: params,
   });
 }

@@ -1,23 +1,24 @@
 import { DynamoDB } from "aws-sdk";
 import { usefulObjectMapper } from "../mappers/useful";
-import { filterConstructor, FilterReducer } from "../reducers/filter";
-import { indexNameConstructor, IndexNameReducer } from "../reducers/index_name";
-import { limitConstructor, LimitReducer } from "../reducers/limit";
-import { selectConstructor, SelectReducer } from "../reducers/select";
+import { filterConstructor, FilterReducer, mockFilterReducer } from "../reducers/filter";
+import { indexNameConstructor, IndexNameReducer, mockIndexNameReducer } from "../reducers/index_name";
+import { limitConstructor, LimitReducer, mockLimitReducer } from "../reducers/limit";
+import { mockSelectReducer, selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { MockBuilderIntepreter } from "../types/builder";
 
-export type ScanBuilder<Schema, PK extends keyof Schema> = {
-  index: IndexNameReducer;
+export type ScanReducers<Schema, PK extends keyof Schema> = {
+  indexName: IndexNameReducer;
   filter: FilterReducer<Schema, PK>;
   select: SelectReducer<Schema>;
   limit: LimitReducer;
 };
 
-export type ScanOperation<Schema, PK extends keyof Schema> = Operation<ScanBuilder<Schema, PK>, DynamoDB.ScanInput, Schema[]>;
+export type ScanOperation<Schema, PK extends keyof Schema> = Operation<ScanReducers<Schema, PK>, DynamoDB.ScanInput, Schema[]>;
 
 export function scanConstructor<Schema, PK extends keyof Schema>(...[client, name, option]: OperationProps): ScanOperation<Schema, PK> {
-  return async (query) => {
+  return async (builder) => {
     const toDateString = option?.toDateString ?? ((value) => value.toISOString());
 
     const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
@@ -26,14 +27,14 @@ export function scanConstructor<Schema, PK extends keyof Schema>(...[client, nam
 
     const select = selectConstructor<Schema>();
 
-    const index = indexNameConstructor();
+    const indexName = indexNameConstructor();
 
     const limit = limitConstructor();
 
     const { Items } = await client
       .scan(
-        query({
-          index,
+        builder({
+          indexName,
           filter,
           select,
           limit,
@@ -44,5 +45,20 @@ export function scanConstructor<Schema, PK extends keyof Schema>(...[client, nam
       .promise();
 
     return usefulObjectMapper(fromDateString)(Items);
+  };
+}
+
+export function buildMockScan<Schema, PK extends keyof Schema>(
+  ...[fn]: Parameters<MockBuilderIntepreter<ScanOperation<Schema, PK>>>
+): ReturnType<MockBuilderIntepreter<ScanOperation<Schema, PK>>> {
+  return async (builder) => {
+    const params = builder({
+      indexName: mockIndexNameReducer,
+      filter: mockFilterReducer,
+      select: mockSelectReducer,
+      limit: mockLimitReducer,
+    } as any).reduce(fold, {});
+
+    return fn(params);
   };
 }
