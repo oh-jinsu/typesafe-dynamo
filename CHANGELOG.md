@@ -10,3 +10,7 @@ Split operations.
 
 Ignore *.spec.d.ts files.
 Improve comments.
+
+## 0.6.0
+
+Add functions for mocking.

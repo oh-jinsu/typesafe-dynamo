@@ -1,4 +1,4 @@
-import { selectConstructor } from "./select";
+import { mockSelectReducer, selectConstructor } from "./select";
 
 describe("SelectReducer", () => {
   type User = {
@@ -32,6 +32,22 @@ describe("SelectReducer", () => {
         "#id": "id",
         "#name": "name",
       },
+    });
+  });
+});
+
+describe("MockSelectReducer", () => {
+  type User = {
+    id: string;
+    name: string;
+    createdAt: Date;
+  };
+
+  test("should parse", () => {
+    const result = mockSelectReducer<User>("id")({});
+
+    expect(result).toStrictEqual({
+      select: ["id"],
     });
   });
 });

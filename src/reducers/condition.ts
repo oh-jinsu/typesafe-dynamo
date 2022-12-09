@@ -1,7 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
 import { preffix } from "../mappers/preffix";
-import { ReducerSlice } from "../types/reducer";
+import { MockReducer, ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
@@ -41,4 +41,17 @@ export function conditionConstructor<Schema, PK extends keyof Schema, SK extends
       },
     });
   };
+}
+
+export type MockConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = MockReducer<ConditionReducer<Schema, PK, SK>, "condition">;
+
+export function mockConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema>(
+  ...[params]: Parameters<MockConditionReducer<Schema, PK, SK>>
+): ReturnType<MockConditionReducer<Schema, PK, SK>> {
+  return ({ condition }) => ({
+    condition: {
+      ...(condition ?? {}),
+      ...params,
+    },
+  });
 }

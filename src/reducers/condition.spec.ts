@@ -1,4 +1,4 @@
-import { conditionConstructor } from "./condition";
+import { conditionConstructor, mockConditionReducer } from "./condition";
 
 describe("ConditionReducer", () => {
   type User = {
@@ -52,6 +52,20 @@ describe("ConditionReducer", () => {
       ExpressionAttributeValues: {
         ":id": "uuid",
         ":name": "Jinsu",
+      },
+    });
+  });
+});
+
+describe("MockCondition", () => {
+  test("should parse", () => {
+    const result = mockConditionReducer({
+      id: "1",
+    })({});
+
+    expect(result).toStrictEqual({
+      condition: {
+        id: "1",
       },
     });
   });

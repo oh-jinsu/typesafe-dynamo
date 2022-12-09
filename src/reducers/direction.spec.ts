@@ -1,4 +1,4 @@
-import { directionConstructor } from "./direction";
+import { directionConstructor, mockDirectionReducer } from "./direction";
 
 describe("DirectionReducer", () => {
   test("should parse to true", () => {
@@ -14,6 +14,16 @@ describe("DirectionReducer", () => {
 
     expect(result).toStrictEqual({
       ScanIndexForward: false,
+    });
+  });
+});
+
+describe("MockDirectionReducer", () => {
+  test("should parse", () => {
+    const result = mockDirectionReducer("FORWARD")({});
+
+    expect(result).toStrictEqual({
+      direction: "FORWARD",
     });
   });
 });
