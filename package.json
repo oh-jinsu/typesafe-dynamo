@@ -1,6 +1,6 @@
 {
   "name": "typesafe-dynamo",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Provide type-safe query operations for AWS DynamoDB.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

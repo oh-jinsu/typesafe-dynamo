@@ -20,7 +20,7 @@ export * from "./operations";
 export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   get: GetOperation<Schema, PK, SK>;
   query: QueryOperation<Schema, PK, SK>;
-  scan: ScanOperation<Schema, PK>;
+  scan: ScanOperation<Schema, PK, SK>;
   put: PutOperation<Schema>;
   update: UpdateOperation<Schema, PK, SK>;
   remove: RemoveOperation<Schema, PK, SK>;
@@ -36,7 +36,7 @@ export default function typesafe<Schema, PK extends keyof Schema, SK extends key
   return {
     get: getConstructor<Schema, PK, SK>(...props),
     query: queryConstructor<Schema, PK, SK>(...props),
-    scan: scanConstructor<Schema, PK>(...props),
+    scan: scanConstructor<Schema, PK, SK>(...props),
     put: putConstructor<Schema>(...props),
     update: updateConstructor<Schema, PK, SK>(...props),
     remove: removeConstructor<Schema, PK, SK>(...props),

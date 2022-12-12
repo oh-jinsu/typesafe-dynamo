@@ -1,4 +1,5 @@
 import { DynamoDB } from "aws-sdk";
+import { putConstructor } from "./put";
 import { buildMockQuery, queryConstructor, QueryOperation } from "./query";
 
 describe("Query operation", () => {
@@ -41,6 +42,43 @@ describe("Query operation", () => {
 
     expect(result.length).toBe(0);
   });
+
+  test("should paginate", async () => {
+    const put = putConstructor<User>(client, "test");
+
+    const id = `id${new Date().getTime()}`;
+
+    const generateUser = (name: string) =>
+      put(({ values }) => [
+        values({
+          id,
+          name,
+        }),
+      ]);
+
+    await Promise.all([generateUser("a"), generateUser("b"), generateUser("c")]);
+
+    const items = await query(({ condition, limit }) => [
+      condition({
+        id,
+      }),
+      limit(1),
+    ]);
+
+    const last = items[items.length - 1];
+
+    const result = await query(({ condition, nextOf }) => [
+      condition({
+        id,
+      }),
+      nextOf({
+        id: last.id,
+        name: last.name,
+      }),
+    ]);
+
+    expect(result.length).toBe(2);
+  });
 });
 
 describe("BuildMockQuery", () => {
@@ -72,8 +110,8 @@ describe("BuildMockQuery", () => {
       }),
     ]);
 
-    expect(result?.[0].id).toBe("uuid");
-    expect(result?.[0].name).toBe("Jinsu");
-    expect(result?.[0].createdAt).toBeInstanceOf(Date);
+    expect(result[0].id).toBe("uuid");
+    expect(result[0].name).toBe("Jinsu");
+    expect(result[0].createdAt).toBeInstanceOf(Date);
   });
 });

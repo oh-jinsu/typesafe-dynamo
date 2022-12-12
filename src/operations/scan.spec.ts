@@ -12,7 +12,7 @@ describe("Scan operation", () => {
     createdAt: Date;
   };
 
-  const scan = scanConstructor<User, "id">(client, "test");
+  const scan = scanConstructor<User, "id", never>(client, "test");
 
   test("should return objects", async () => {
     const result = await scan(({ filter }) => [
@@ -38,7 +38,7 @@ describe("BuildMockScan", () => {
     createdAt: Date;
   };
 
-  type TestOperation = ScanOperation<User, "id">;
+  type TestOperation = ScanOperation<User, "id", never>;
 
   test("should return the passed id", async () => {
     const scan = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
@@ -59,8 +59,8 @@ describe("BuildMockScan", () => {
       }),
     ]);
 
-    expect(result?.[0].id).toBe("uuid");
-    expect(result?.[0].name).toBe("Jinsu");
-    expect(result?.[0].createdAt).toBeInstanceOf(Date);
+    expect(result[0].id).toBe("uuid");
+    expect(result[0].name).toBe("Jinsu");
+    expect(result[0].createdAt).toBeInstanceOf(Date);
   });
 });

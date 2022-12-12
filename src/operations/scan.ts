@@ -7,17 +7,21 @@ import { mockSelectReducer, selectConstructor, SelectReducer } from "../reducers
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { MockBuilderIntepreter } from "../types/builder";
+import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 
-export type ScanReducers<Schema, PK extends keyof Schema> = {
+export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   indexName: IndexNameReducer;
   filter: FilterReducer<Schema, PK>;
   select: SelectReducer<Schema>;
+  nextOf: NextOfReducer<Schema, PK, SK>;
   limit: LimitReducer;
 };
 
-export type ScanOperation<Schema, PK extends keyof Schema> = Operation<ScanReducers<Schema, PK>, DynamoDB.ScanInput, Schema[]>;
+export type ScanOperation<Schema, PK extends keyof Schema, SK extends keyof Schema> = Operation<ScanReducers<Schema, PK, SK>, DynamoDB.ScanInput, Schema[]>;
 
-export function scanConstructor<Schema, PK extends keyof Schema>(...[client, name, option]: OperationProps): ScanOperation<Schema, PK> {
+export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>(
+  ...[client, name, option]: OperationProps
+): ScanOperation<Schema, PK, SK> {
   return async (builder) => {
     const toDateString = option?.toDateString ?? ((value) => value.toISOString());
 
@@ -29,6 +33,8 @@ export function scanConstructor<Schema, PK extends keyof Schema>(...[client, nam
 
     const indexName = indexNameConstructor();
 
+    const nextOf = nextOfConstructor<Schema, PK, SK>({ toDateString });
+
     const limit = limitConstructor();
 
     const { Items } = await client
@@ -37,6 +43,7 @@ export function scanConstructor<Schema, PK extends keyof Schema>(...[client, nam
           indexName,
           filter,
           select,
+          nextOf,
           limit,
         }).reduce(fold, {
           TableName: name,
@@ -48,9 +55,9 @@ export function scanConstructor<Schema, PK extends keyof Schema>(...[client, nam
   };
 }
 
-export function buildMockScan<Schema, PK extends keyof Schema>(
-  ...[fn]: Parameters<MockBuilderIntepreter<ScanOperation<Schema, PK>>>
-): ReturnType<MockBuilderIntepreter<ScanOperation<Schema, PK>>> {
+export function buildMockScan<Schema, PK extends keyof Schema, SK extends keyof Schema>(
+  ...[fn]: Parameters<MockBuilderIntepreter<ScanOperation<Schema, PK, SK>>>
+): ReturnType<MockBuilderIntepreter<ScanOperation<Schema, PK, SK>>> {
   return async (builder) => {
     const params = builder({
       indexName: mockIndexNameReducer,

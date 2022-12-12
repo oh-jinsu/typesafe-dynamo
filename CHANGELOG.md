@@ -14,3 +14,7 @@ Improve comments.
 ## 0.6.0
 
 Add functions for mocking.
+
+## 0.6.1
+
+Support the nextOf reducer for the pagination.

@@ -1,6 +1,6 @@
 import { keyConstructor, mockKeyReducer } from "./key";
 
-describe("MockKeyReducer", () => {
+describe("KeyReducer", () => {
   type User = {
     id: string;
     createdAt: Date;
