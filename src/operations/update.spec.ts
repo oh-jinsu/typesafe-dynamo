@@ -10,7 +10,9 @@ describe("UpdateOperation", () => {
   type User = {
     id: string;
     name: string;
-    age: number;
+    birth: {
+      at: Date;
+    };
     createdAt: Date;
   };
 
@@ -25,7 +27,9 @@ describe("UpdateOperation", () => {
       values({
         id,
         name: "generated-user",
-        age: 25,
+        birth: {
+          at: new Date(),
+        },
       }),
     ]);
 
@@ -35,7 +39,9 @@ describe("UpdateOperation", () => {
         name: "generated-user",
       }),
       replace({
-        age: 23,
+        birth: {
+          at: new Date(),
+        },
       }),
     ]);
 
@@ -43,7 +49,7 @@ describe("UpdateOperation", () => {
 
     expect(result.name).toBe("generated-user");
 
-    expect(result.age).toBe(23);
+    expect(result.birth.at).toBeInstanceOf(Date);
 
     expect(result.createdAt).toBeInstanceOf(Date);
   });

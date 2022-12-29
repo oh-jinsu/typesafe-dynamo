@@ -4,9 +4,13 @@ import { mapper } from "./map";
  * Map a value to the form that is acceptable for [`DynamoDB.DocumentClient`]
  */
 export function acceptableValueMapper(toDateString: (value: Date) => string) {
-  return (value: unknown): any => {
+  return (value: any): any => {
     if (value instanceof Date) {
       return toDateString(value);
+    }
+
+    if (value.constructor === Object) {
+      return `Object ${JSON.stringify(value)}`;
     }
 
     return value;

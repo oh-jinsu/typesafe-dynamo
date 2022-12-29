@@ -16,6 +16,20 @@ describe("AcceptableValueMapper", () => {
 
     expect(result).toBe(1);
   });
+
+  test("should stringify the nested object", () => {
+    const map = acceptableValueMapper((value) => value.toISOString());
+
+    const result = map({
+      lastName: "Oh",
+    });
+
+    expect(result).toBe(
+      `Object ${JSON.stringify({
+        lastName: "Oh",
+      })}`,
+    );
+  });
 });
 
 describe("AcceptableObjectMapper", () => {
