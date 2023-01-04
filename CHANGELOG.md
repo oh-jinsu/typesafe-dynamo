@@ -22,3 +22,7 @@
 ## 0.6.2
 
 - Save nested object properties as a JSON string.
+
+## 0.6.3
+
+- Handle nullable properties.

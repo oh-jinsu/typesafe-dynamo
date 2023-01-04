@@ -5,6 +5,10 @@ import { mapper } from "./map";
  */
 export function acceptableValueMapper(toDateString: (value: Date) => string) {
   return (value: any): any => {
+    if (value === null || typeof value === "undefined") {
+      return null;
+    }
+
     if (value instanceof Date) {
       return toDateString(value);
     }

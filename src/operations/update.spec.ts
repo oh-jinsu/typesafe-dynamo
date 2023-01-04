@@ -10,7 +10,7 @@ describe("UpdateOperation", () => {
   type User = {
     id: string;
     name: string;
-    birth: {
+    birth?: {
       at: Date;
     };
     createdAt: Date;
@@ -49,7 +49,37 @@ describe("UpdateOperation", () => {
 
     expect(result.name).toBe("generated-user");
 
-    expect(result.birth.at).toBeInstanceOf(Date);
+    expect(result.birth?.at).toBeInstanceOf(Date);
+
+    expect(result.createdAt).toBeInstanceOf(Date);
+  });
+
+  test("should update an object with null", async () => {
+    await put(({ values }) => [
+      values({
+        id,
+        name: "generated-user",
+        birth: {
+          at: new Date(),
+        },
+      }),
+    ]);
+
+    const result = await update(({ key, replace }) => [
+      key({
+        id,
+        name: "generated-user",
+      }),
+      replace({
+        birth: undefined,
+      }),
+    ]);
+
+    expect(result.id).toBe(id);
+
+    expect(result.name).toBe("generated-user");
+
+    expect(result.birth).toBeNull();
 
     expect(result.createdAt).toBeInstanceOf(Date);
   });
