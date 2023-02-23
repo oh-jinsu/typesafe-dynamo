@@ -9,6 +9,8 @@ import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 import { GSIManifest } from "../types/gsi";
+import { equalWith, or } from "../mappers/value_operators";
+import { notExists } from "../mappers/key_functions";
 
 export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema>> = {
   condition: ConditionReducer<Schema, PK, SK>;
@@ -52,32 +54,40 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
 
     const direction = directionConstructor();
 
+    const reducers = (() => {
+      const commons = builder({
+        condition,
+        filter,
+        select,
+        nextOf,
+        indexName: <IndexName extends keyof GSI>(value: IndexName) => {
+          const indexName = value.toString();
+
+          return {
+            condition: conditionConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
+            filter: filterConstructor<Schema, GSI[IndexName][0]>({ indexName, toDateString }),
+            nextOf: nextOfConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
+          };
+        },
+        limit,
+        direction,
+      });
+
+      if (option?.soft) {
+        return [
+          ...commons,
+          filter({
+            deletedAt: or(notExists(), equalWith(null)),
+          } as any),
+        ];
+      }
+
+      return commons;
+    })();
     const { Items } = await client
       .query(
-        builder({
-          condition,
-          filter,
-          select,
-          nextOf,
-          indexName: <IndexName extends keyof GSI>(value: IndexName) => {
-            const indexName = value.toString();
-
-            return {
-              condition: conditionConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
-              filter: filterConstructor<Schema, GSI[IndexName][0]>({ indexName, toDateString }),
-              nextOf: nextOfConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
-            };
-          },
-          limit,
-          direction,
-        }).reduce(fold, {
+        reducers.reduce(fold, {
           TableName: name,
-          FilterExpression: option?.soft ? "(attribute_not_exists(deletedAt) or deletedAt = :null)" : undefined,
-          ExpressionAttributeValues: option?.soft
-            ? {
-                ":null": null,
-              }
-            : undefined,
         }),
       )
       .promise();

@@ -6,6 +6,8 @@ import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
+import { notExists } from "../mappers/key_functions";
+import { or, equalWith } from "../mappers/value_operators";
 
 export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   filter: FilterReducer<Schema, PK>;
@@ -32,19 +34,31 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
 
     const limit = limitConstructor();
 
-    const input = builder({
-      filter,
-      select,
-      nextOf,
-      limit,
-    }).reduce(fold, {
+    const reducers = (() => {
+      if (option?.soft) {
+        return [
+          ...builder({
+            filter,
+            select,
+            nextOf,
+            limit,
+          }),
+          filter({
+            deletedAt: or(notExists(), equalWith(null)),
+          } as any),
+        ];
+      }
+
+      return builder({
+        filter,
+        select,
+        nextOf,
+        limit,
+      });
+    })();
+
+    const input = reducers.reduce(fold, {
       TableName: name,
-      FilterExpression: option?.soft ? "(attribute_not_exists(deletedAt) or deletedAt = :null)" : undefined,
-      ExpressionAttributeValues: option?.soft
-        ? {
-            ":null": null,
-          }
-        : undefined,
     });
 
     const { Items } = await client.scan(input).promise();

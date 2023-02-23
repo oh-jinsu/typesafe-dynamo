@@ -28,7 +28,7 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
 
     const replace = replaceConstructor<Schema, PK, SK>({ toDateString });
 
-    const params = reducers({
+    const input = reducers({
       key,
       replace,
     }).reduce(fold, {
@@ -36,7 +36,7 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
       ReturnValues: "ALL_NEW",
     });
 
-    const { Attributes } = await client.update(params).promise();
+    const { Attributes } = await client.update(input).promise();
 
     return usefulObjectMapper(fromDateString)(Attributes);
   };

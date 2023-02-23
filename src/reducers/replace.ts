@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
-import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
-import { preffix } from "../mappers/preffix";
+import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
+import { expressionReducer } from "../mappers/expression";
 import { DateColumnList } from "../types/date_column_list";
 import { ReducerSlice } from "../types/reducer";
 
@@ -32,24 +32,17 @@ export type ReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Sch
  */
 export function replaceConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): ReplaceReducer<Schema, PK, SK> {
   return (params) => {
-    return ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
-      UpdateExpression: `${UpdateExpression ? `${UpdateExpression},` : "set #updatedAt = :updatedAt,"} ${Object.keys(params)
-        .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
-        .join(", ")}`,
-      ExpressionAttributeNames: {
-        ...(ExpressionAttributeNames ?? {}),
-        ...attributeNamesMapper()({
-          ...params,
-          updatedAt: new Date(),
-        }),
-      },
-      ExpressionAttributeValues: {
-        ...(ExpressionAttributeValues ?? {}),
-        ...attributeValuesMapper(toDateString)({
-          ...params,
-          updatedAt: new Date(),
-        }),
-      },
-    });
+    return ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => {
+      const entries = Object.entries({
+        updatedAt: new Date(),
+        ...params,
+      });
+
+      return {
+        UpdateExpression: `set ${entries.reduce(expressionReducer(", "), UpdateExpression?.replace(/^set\s/, ""))}`,
+        ExpressionAttributeNames: entries.reduce(attributeNamesReducer(), ExpressionAttributeNames),
+        ExpressionAttributeValues: entries.reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
+      };
+    };
   };
 }

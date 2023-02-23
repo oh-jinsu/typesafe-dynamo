@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
-import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
-import { preffix } from "../mappers/preffix";
+import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
+import { expressionReducer } from "../mappers/expression";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
@@ -33,18 +33,9 @@ export function conditionConstructor<Schema, PK extends keyof Schema, SK extends
   return (params) => {
     return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
       IndexName: indexName,
-      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(params)
-        .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
-        .join(" and ")}`,
-
-      ExpressionAttributeNames: {
-        ...(ExpressionAttributeNames ?? {}),
-        ...attributeNamesMapper()(params),
-      },
-      ExpressionAttributeValues: {
-        ...(ExpressionAttributeValues ?? {}),
-        ...attributeValuesMapper(toDateString)(params),
-      },
+      KeyConditionExpression: Object.entries(params).reduce(expressionReducer(" and "), KeyConditionExpression),
+      ExpressionAttributeNames: Object.entries(params).reduce(attributeNamesReducer(), ExpressionAttributeNames),
+      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
     });
   };
 }

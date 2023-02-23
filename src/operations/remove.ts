@@ -23,20 +23,18 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
     const key = keyConstructor<Schema, PK, SK>({ toDateString });
 
     if (option?.soft) {
-      await client
-        .update(
-          [
-            ...builder({
-              key,
-            }),
-            replaceConstructor({ toDateString })({
-              deletedAt: new Date(),
-            }),
-          ].reduce(fold, {
-            TableName: name,
-          }),
-        )
-        .promise();
+      const input = [
+        ...builder({
+          key,
+        }),
+        replaceConstructor({ toDateString })({
+          deletedAt: new Date(),
+        }),
+      ].reduce(fold, {
+        TableName: name,
+      });
+
+      await client.update(input).promise();
 
       return;
     }

@@ -1,13 +1,13 @@
-import { attributeNamesMapper, attributeValuesMapper } from "./attributes";
+import { attributeNamesReducer, attributeValuesReducer } from "./attributes";
 
 describe("AttributeNamesMapper", () => {
   test("should parse", () => {
-    const map = attributeNamesMapper();
+    const reducer = attributeNamesReducer();
 
-    const result = map({
+    const result = Object.entries({
       lastName: "Oh",
       firstName: "Jinsu",
-    });
+    }).reduce(reducer, {});
 
     expect(result).toStrictEqual({
       "#lastName": "lastName",
@@ -20,12 +20,12 @@ describe("AttributeValuesMapper", () => {
   test("should parse", () => {
     const toDateString = (value: Date) => value.toISOString();
 
-    const map = attributeValuesMapper(toDateString);
+    const reducer = attributeValuesReducer(toDateString);
 
-    const result = map({
+    const result = Object.entries({
       lastName: "Oh",
       firstName: "Jinsu",
-    });
+    }).reduce(reducer, {});
 
     expect(result).toStrictEqual({
       ":lastName": "Oh",

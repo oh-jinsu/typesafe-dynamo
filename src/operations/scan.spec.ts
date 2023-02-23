@@ -1,4 +1,5 @@
 import { DynamoDB } from "aws-sdk";
+import { lessThan, or } from "../mappers/value_operators";
 import { putConstructor } from "./put";
 import { removeConstructor } from "./remove";
 import { scanConstructor } from "./scan";
@@ -19,7 +20,8 @@ describe("Scan operation", () => {
   test("should return objects", async () => {
     const result = await scan(({ filter }) => [
       filter({
-        name: "static-user",
+        name: or("static-user", "strange-user"),
+        createdAt: lessThan(new Date()),
       }),
     ]);
 
@@ -53,7 +55,7 @@ describe("Soft query operation", () => {
   test("should remove an object", async () => {
     const id = `id${new Date().getTime()}`;
 
-    const name = "deleting-user";
+    const name = `name${new Date().getTime()}`;
 
     await put(({ values }) => [
       values({

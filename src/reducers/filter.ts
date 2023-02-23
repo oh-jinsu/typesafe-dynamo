@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
-import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
-import { preffix } from "../mappers/preffix";
+import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
+import { expressionReducer } from "../mappers/expression";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
@@ -26,21 +26,14 @@ export type FilterReducer<Schema, PK extends keyof Schema> = (
  *
  * ```
  */
+
 export function filterConstructor<Schema, PK extends keyof Schema>({ toDateString, indexName }: Context): FilterReducer<Schema, PK> {
   return (params) => {
     return ({ FilterExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
       IndexName: indexName,
-      FilterExpression: `${FilterExpression ? `${FilterExpression} and ` : ""}${Object.keys(params)
-        .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
-        .join(" and ")}`,
-      ExpressionAttributeNames: {
-        ...(ExpressionAttributeNames ?? {}),
-        ...attributeNamesMapper()(params),
-      },
-      ExpressionAttributeValues: {
-        ...(ExpressionAttributeValues ?? {}),
-        ...attributeValuesMapper(toDateString)(params),
-      },
+      FilterExpression: Object.entries(params).reduce(expressionReducer(" and "), FilterExpression),
+      ExpressionAttributeNames: Object.entries(params).reduce(attributeNamesReducer(), ExpressionAttributeNames),
+      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
     });
   };
 }
