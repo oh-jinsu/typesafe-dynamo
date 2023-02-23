@@ -72,6 +72,12 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
           direction,
         }).reduce(fold, {
           TableName: name,
+          FilterExpression: option?.soft ? "(attribute_not_exists(deletedAt) or deletedAt = :null)" : undefined,
+          ExpressionAttributeValues: option?.soft
+            ? {
+                ":null": null,
+              }
+            : undefined,
         }),
       )
       .promise();

@@ -32,18 +32,22 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
 
     const limit = limitConstructor();
 
-    const { Items } = await client
-      .scan(
-        builder({
-          filter,
-          select,
-          nextOf,
-          limit,
-        }).reduce(fold, {
-          TableName: name,
-        }),
-      )
-      .promise();
+    const input = builder({
+      filter,
+      select,
+      nextOf,
+      limit,
+    }).reduce(fold, {
+      TableName: name,
+      FilterExpression: option?.soft ? "(attribute_not_exists(deletedAt) or deletedAt = :null)" : undefined,
+      ExpressionAttributeValues: option?.soft
+        ? {
+            ":null": null,
+          }
+        : undefined,
+    });
+
+    const { Items } = await client.scan(input).promise();
 
     return usefulObjectMapper(fromDateString)(Items);
   };

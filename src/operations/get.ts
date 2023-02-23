@@ -43,6 +43,10 @@ export function getConstructor<Schema, PK extends keyof Schema, SK extends keyof
       return;
     }
 
+    if (option?.soft === true && Item["deletedAt"]) {
+      return;
+    }
+
     return usefulObjectMapper(fromDateString)(Item);
   };
 }

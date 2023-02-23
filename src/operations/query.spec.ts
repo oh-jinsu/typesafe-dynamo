@@ -1,6 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { putConstructor } from "./put";
 import { queryConstructor } from "./query";
+import { removeConstructor } from "./remove";
 
 describe("Query operation", () => {
   const client = new DynamoDB.DocumentClient({
@@ -101,5 +102,51 @@ describe("Query operation", () => {
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
       },
     ]);
+  });
+});
+
+describe("Soft query operation", () => {
+  const client = new DynamoDB.DocumentClient({
+    region: "ap-northeast-2",
+  });
+
+  type User = {
+    id: string;
+    name: string;
+    createdAt: Date;
+  };
+
+  const query = queryConstructor<User, "id", "name">(client, "test", { soft: true });
+
+  const put = putConstructor<User>(client, "test");
+
+  const remove = removeConstructor<User, "id", "name">(client, "test", { soft: true });
+
+  test("should remove an object", async () => {
+    const id = `id${new Date().getTime()}`;
+
+    const name = "generated-user";
+
+    await put(({ values }) => [
+      values({
+        id,
+        name,
+      }),
+    ]);
+
+    await remove(({ key }) => [
+      key({
+        id,
+        name,
+      }),
+    ]);
+
+    const result = await query(({ condition }) => [
+      condition({
+        id,
+      }),
+    ]);
+
+    expect(result).toStrictEqual([]);
   });
 });

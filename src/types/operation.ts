@@ -3,6 +3,7 @@ import { InputList } from "./input_list";
 import { Builder } from "./builder";
 
 export type OperationOption = {
+  soft?: boolean;
   toDateString?: (value: Date) => string;
   fromDateString?: (value: string) => Date;
 };

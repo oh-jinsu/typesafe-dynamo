@@ -2,6 +2,7 @@ import { DynamoDB } from "aws-sdk";
 import { keyConstructor, KeyReducer } from "../reducers/key";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { replaceConstructor } from "../reducers/replace";
 
 export type RemoveReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -20,6 +21,25 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
     const toDateString = option?.toDateString ?? ((value) => value.toISOString());
 
     const key = keyConstructor<Schema, PK, SK>({ toDateString });
+
+    if (option?.soft) {
+      await client
+        .update(
+          [
+            ...builder({
+              key,
+            }),
+            replaceConstructor({ toDateString })({
+              deletedAt: new Date(),
+            }),
+          ].reduce(fold, {
+            TableName: name,
+          }),
+        )
+        .promise();
+
+      return;
+    }
 
     await client
       .delete(
