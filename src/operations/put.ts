@@ -1,9 +1,8 @@
 import { DynamoDB } from "aws-sdk";
 import { usefulObjectMapper } from "../mappers/useful";
-import { mockValuesReducer, valuesConstructor, ValuesReducer } from "../reducers/values";
+import { valuesConstructor, ValuesReducer } from "../reducers/values";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
-import { MockBuilderIntepreter } from "../types/builder";
 
 export type PutReducers<Schema> = {
   values: ValuesReducer<Schema>;
@@ -28,17 +27,5 @@ export function putConstructor<Schema>(...[client, name, option]: OperationProps
     await client.put(params).promise();
 
     return usefulObjectMapper(fromDateString)(params.Item);
-  };
-}
-
-export function buildMockPut<Schema>(
-  ...[fn]: Parameters<MockBuilderIntepreter<PutOperation<Schema>>>
-): ReturnType<MockBuilderIntepreter<PutOperation<Schema>>> {
-  return async (builder) => {
-    const params = builder({
-      values: mockValuesReducer,
-    } as any).reduce(fold, {});
-
-    return fn(params);
   };
 }

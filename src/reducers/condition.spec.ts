@@ -1,4 +1,4 @@
-import { conditionConstructor, mockConditionReducer } from "./condition";
+import { conditionConstructor } from "./condition";
 
 describe("ConditionReducer", () => {
   type User = {
@@ -18,6 +18,31 @@ describe("ConditionReducer", () => {
     })({});
 
     expect(result).toStrictEqual({
+      IndexName: undefined,
+      KeyConditionExpression: "#id = :id and #name = :name",
+      ExpressionAttributeNames: {
+        "#id": "id",
+        "#name": "name",
+      },
+      ExpressionAttributeValues: {
+        ":id": "uuid",
+        ":name": "Jinsu",
+      },
+    });
+  });
+
+  test("should parse with an index name", () => {
+    const toDateString = (value: Date) => value.toISOString();
+
+    const condition = conditionConstructor<User, "id", "name">({ toDateString });
+
+    const result = condition("indexname", {
+      id: "uuid",
+      name: "Jinsu",
+    })({});
+
+    expect(result).toStrictEqual({
+      IndexName: "indexname",
       KeyConditionExpression: "#id = :id and #name = :name",
       ExpressionAttributeNames: {
         "#id": "id",
@@ -44,6 +69,7 @@ describe("ConditionReducer", () => {
     );
 
     expect(result).toStrictEqual({
+      IndexName: undefined,
       KeyConditionExpression: "#id = :id and #name = :name",
       ExpressionAttributeNames: {
         "#id": "id",
@@ -52,20 +78,6 @@ describe("ConditionReducer", () => {
       ExpressionAttributeValues: {
         ":id": "uuid",
         ":name": "Jinsu",
-      },
-    });
-  });
-});
-
-describe("MockCondition", () => {
-  test("should parse", () => {
-    const result = mockConditionReducer({
-      id: "1",
-    })({});
-
-    expect(result).toStrictEqual({
-      condition: {
-        id: "1",
       },
     });
   });

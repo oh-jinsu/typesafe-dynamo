@@ -1,16 +1,13 @@
 import { DynamoDB } from "aws-sdk";
 import { usefulObjectMapper } from "../mappers/useful";
-import { filterConstructor, FilterReducer, mockFilterReducer } from "../reducers/filter";
-import { indexNameConstructor, IndexNameReducer, mockIndexNameReducer } from "../reducers/index_name";
-import { limitConstructor, LimitReducer, mockLimitReducer } from "../reducers/limit";
-import { mockSelectReducer, selectConstructor, SelectReducer } from "../reducers/select";
+import { filterConstructor, FilterReducer } from "../reducers/filter";
+import { limitConstructor, LimitReducer } from "../reducers/limit";
+import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
-import { MockBuilderIntepreter } from "../types/builder";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 
 export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
-  indexName: IndexNameReducer;
   filter: FilterReducer<Schema, PK>;
   select: SelectReducer<Schema>;
   nextOf: NextOfReducer<Schema, PK, SK>;
@@ -31,8 +28,6 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
 
     const select = selectConstructor<Schema>();
 
-    const indexName = indexNameConstructor();
-
     const nextOf = nextOfConstructor<Schema, PK, SK>({ toDateString });
 
     const limit = limitConstructor();
@@ -40,7 +35,6 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
     const { Items } = await client
       .scan(
         builder({
-          indexName,
           filter,
           select,
           nextOf,
@@ -52,20 +46,5 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
       .promise();
 
     return usefulObjectMapper(fromDateString)(Items);
-  };
-}
-
-export function buildMockScan<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[fn]: Parameters<MockBuilderIntepreter<ScanOperation<Schema, PK, SK>>>
-): ReturnType<MockBuilderIntepreter<ScanOperation<Schema, PK, SK>>> {
-  return async (builder) => {
-    const params = builder({
-      indexName: mockIndexNameReducer,
-      filter: mockFilterReducer,
-      select: mockSelectReducer,
-      limit: mockLimitReducer,
-    } as any).reduce(fold, {});
-
-    return fn(params);
   };
 }

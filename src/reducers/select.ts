@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import { preffix } from "../mappers/preffix";
-import { MockSpreadReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 export type SelectReducer<Schema> = (
   ...params: (keyof Schema)[]
@@ -34,12 +34,4 @@ export function selectConstructor<Schema>(): SelectReducer<Schema> {
         ExpressionAttributeNames || ({} as any),
       ),
     });
-}
-
-export type MockSelectReducer<Schema> = MockSpreadReducer<SelectReducer<Schema>, "select">;
-
-export function mockSelectReducer<Schema>(...params: Parameters<MockSelectReducer<Schema>>): ReturnType<MockSelectReducer<Schema>> {
-  return ({ select }) => ({
-    select: [...(select ?? []), ...params],
-  });
 }

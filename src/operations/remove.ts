@@ -1,8 +1,7 @@
 import { DynamoDB } from "aws-sdk";
-import { keyConstructor, KeyReducer, mockKeyReducer } from "../reducers/key";
+import { keyConstructor, KeyReducer } from "../reducers/key";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
-import { MockBuilderIntepreter } from "../types/builder";
 
 export type RemoveReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -31,17 +30,5 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
         }),
       )
       .promise();
-  };
-}
-
-export function buildMockRemove<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[fn]: Parameters<MockBuilderIntepreter<RemoveOperation<Schema, PK, SK>>>
-): ReturnType<MockBuilderIntepreter<RemoveOperation<Schema, PK, SK>>> {
-  return async (builder) => {
-    const params = builder({
-      key: mockKeyReducer,
-    } as any).reduce(fold, {});
-
-    return fn(params);
   };
 }

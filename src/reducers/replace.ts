@@ -2,7 +2,7 @@ import { DynamoDB } from "aws-sdk";
 import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
 import { preffix } from "../mappers/preffix";
 import { DateColumnList } from "../types/date_column_list";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
@@ -52,17 +52,4 @@ export function replaceConstructor<Schema, PK extends keyof Schema, SK extends k
       },
     });
   };
-}
-
-export type MockReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = MockReducer<ReplaceReducer<Schema, PK, SK>, "replace">;
-
-export function mockReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[params]: Parameters<MockReplaceReducer<Schema, PK, SK>>
-): ReturnType<MockReplaceReducer<Schema, PK, SK>> {
-  return ({ replace }) => ({
-    replace: {
-      ...(replace ?? {}),
-      ...params,
-    },
-  });
 }

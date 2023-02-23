@@ -1,4 +1,4 @@
-import { nextOfConstructor, mockNextOfReducer } from "./next_of";
+import { nextOfConstructor } from "./next_of";
 
 describe("NextOfReducer", () => {
   type User = {
@@ -15,20 +15,6 @@ describe("NextOfReducer", () => {
 
     expect(result).toStrictEqual({
       ExclusiveStartKey: {
-        id: "uuid",
-      },
-    });
-  });
-});
-
-describe("MockNextOfReducer", () => {
-  test("should return a nextOf property", () => {
-    const result = mockNextOfReducer({
-      id: "uuid",
-    })({});
-
-    expect(result).toStrictEqual({
-      nextOf: {
         id: "uuid",
       },
     });

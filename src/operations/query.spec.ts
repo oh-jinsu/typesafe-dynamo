@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import { putConstructor } from "./put";
-import { buildMockQuery, queryConstructor, QueryOperation } from "./query";
+import { queryConstructor } from "./query";
 
 describe("Query operation", () => {
   const client = new DynamoDB.DocumentClient({
@@ -13,7 +13,17 @@ describe("Query operation", () => {
     createdAt: Date;
   };
 
-  const query = queryConstructor<User, "id", "name">(client, "test");
+  const query = queryConstructor<
+    User,
+    "id",
+    "name",
+    {
+      "user-gsi": {
+        pk: "id";
+        sk: "createdAt";
+      };
+    }
+  >(client, "test");
 
   test("should return objects", async () => {
     const result = await query(({ condition }) => [
@@ -78,40 +88,5 @@ describe("Query operation", () => {
     ]);
 
     expect(result.length).toBe(2);
-  });
-});
-
-describe("BuildMockQuery", () => {
-  type User = {
-    id: string;
-    name: string;
-    createdAt: Date;
-  };
-
-  type TestOperation = QueryOperation<User, "id", "name">;
-
-  test("should return the passed id", async () => {
-    const query = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
-
-    query.mockImplementation(
-      buildMockQuery(({ condition }) => [
-        {
-          id: condition.id ?? "",
-          name: condition.name ?? "",
-          createdAt: new Date(),
-        },
-      ]),
-    );
-
-    const result = await query(({ condition }) => [
-      condition({
-        id: "uuid",
-        name: "Jinsu",
-      }),
-    ]);
-
-    expect(result[0].id).toBe("uuid");
-    expect(result[0].name).toBe("Jinsu");
-    expect(result[0].createdAt).toBeInstanceOf(Date);
   });
 });

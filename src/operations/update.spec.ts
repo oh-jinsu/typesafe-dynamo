@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import { putConstructor } from "./put";
-import { buildMockUpdate, updateConstructor, UpdateOperation } from "./update";
+import { updateConstructor } from "./update";
 
 describe("UpdateOperation", () => {
   const client = new DynamoDB.DocumentClient({
@@ -82,44 +82,5 @@ describe("UpdateOperation", () => {
     expect(result.birth).toBeNull();
 
     expect(result.createdAt).toBeInstanceOf(Date);
-  });
-});
-
-describe("BuildMockUpdate", () => {
-  type User = {
-    id: string;
-    name: string;
-    age: number;
-    createdAt: Date;
-  };
-
-  type TestOperation = UpdateOperation<User, "id", never>;
-
-  test("should return the passed id", async () => {
-    const update = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
-
-    update.mockImplementation(
-      buildMockUpdate(({ key, replace }) => ({
-        id: key.id,
-        name: replace.name ?? "",
-        age: replace.age ?? 0,
-        createdAt: new Date(),
-      })),
-    );
-
-    const result = await update(({ key, replace }) => [
-      key({
-        id: "uuid",
-      }),
-      replace({
-        name: "Jinsu",
-        age: 25,
-      }),
-    ]);
-
-    expect(result?.id).toBe("uuid");
-    expect(result?.name).toBe("Jinsu");
-    expect(result?.age).toBe(25);
-    expect(result?.createdAt).toBeInstanceOf(Date);
   });
 });

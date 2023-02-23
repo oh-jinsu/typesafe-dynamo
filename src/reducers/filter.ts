@@ -1,7 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
 import { preffix } from "../mappers/preffix";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
@@ -41,17 +41,4 @@ export function filterConstructor<Schema, PK extends keyof Schema>({ toDateStrin
       },
     });
   };
-}
-
-export type MockFilterReducer<Schema, PK extends keyof Schema> = MockReducer<FilterReducer<Schema, PK>, "filter">;
-
-export function mockFilterReducer<Schema, PK extends keyof Schema>(
-  ...[params]: Parameters<MockFilterReducer<Schema, PK>>
-): ReturnType<MockFilterReducer<Schema, PK>> {
-  return ({ filter }) => ({
-    filter: {
-      ...(filter ?? {}),
-      ...params,
-    },
-  });
 }

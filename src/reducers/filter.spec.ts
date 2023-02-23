@@ -1,4 +1,4 @@
-import { filterConstructor, mockFilterReducer } from "./filter";
+import { filterConstructor } from "./filter";
 
 describe("FilterReducer", () => {
   type User = {
@@ -52,20 +52,6 @@ describe("FilterReducer", () => {
       ExpressionAttributeValues: {
         ":name": "Jinsu",
         ":createdAt": "2023-01-01T00:00:00.000Z",
-      },
-    });
-  });
-});
-
-describe("MockFilterReducer", () => {
-  test("should parse", () => {
-    const result = mockFilterReducer({
-      name: "name",
-    })({});
-
-    expect(result).toStrictEqual({
-      filter: {
-        name: "name",
       },
     });
   });

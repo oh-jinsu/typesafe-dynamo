@@ -1,18 +1,15 @@
 import { DynamoDB } from "aws-sdk";
 import { usefulObjectMapper } from "../mappers/useful";
-import { conditionConstructor, ConditionReducer, mockConditionReducer } from "../reducers/condition";
-import { directionConstructor, DirectionReducer, mockDirectionReducer } from "../reducers/direction";
-import { filterConstructor, FilterReducer, mockFilterReducer } from "../reducers/filter";
-import { indexNameConstructor, IndexNameReducer, mockIndexNameReducer } from "../reducers/index_name";
-import { limitConstructor, LimitReducer, mockLimitReducer } from "../reducers/limit";
-import { mockSelectReducer, selectConstructor, SelectReducer } from "../reducers/select";
+import { conditionConstructor, ConditionReducer } from "../reducers/condition";
+import { directionConstructor, DirectionReducer } from "../reducers/direction";
+import { filterConstructor, FilterReducer } from "../reducers/filter";
+import { limitConstructor, LimitReducer } from "../reducers/limit";
+import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
-import { MockBuilderIntepreter } from "../types/builder";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 
 export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
-  indexName: IndexNameReducer;
   condition: ConditionReducer<Schema, PK, SK>;
   filter: FilterReducer<Schema, PK>;
   select: SelectReducer<Schema>;
@@ -23,7 +20,14 @@ export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Sche
 
 export type QueryOperation<Schema, PK extends keyof Schema, SK extends keyof Schema> = Operation<QueryReducers<Schema, PK, SK>, DynamoDB.QueryInput, Schema[]>;
 
-export function queryConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>(
+export type GSIManifest<Schema> = Record<string, GSIElement<Schema>>;
+
+export type GSIElement<Schema> = {
+  pk: keyof Schema;
+  sk: keyof Schema;
+};
+
+export function queryConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema> = Record<string, never>>(
   ...[client, name, option]: OperationProps
 ): QueryOperation<Schema, PK, SK> {
   return async (builder) => {
@@ -37,8 +41,6 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
 
     const select = selectConstructor<Schema>();
 
-    const indexName = indexNameConstructor();
-
     const nextOf = nextOfConstructor<Schema, PK, SK>({ toDateString });
 
     const limit = limitConstructor();
@@ -48,7 +50,6 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
     const { Items } = await client
       .query(
         builder({
-          indexName,
           condition,
           filter,
           select,
@@ -62,22 +63,5 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
       .promise();
 
     return usefulObjectMapper(fromDateString)(Items);
-  };
-}
-
-export function buildMockQuery<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[fn]: Parameters<MockBuilderIntepreter<QueryOperation<Schema, PK, SK>>>
-): ReturnType<MockBuilderIntepreter<QueryOperation<Schema, PK, SK>>> {
-  return async (builder) => {
-    const params = builder({
-      indexName: mockIndexNameReducer,
-      condition: mockConditionReducer,
-      filter: mockFilterReducer,
-      select: mockSelectReducer,
-      limit: mockLimitReducer,
-      direction: mockDirectionReducer,
-    } as any).reduce(fold, {});
-
-    return fn(params);
   };
 }

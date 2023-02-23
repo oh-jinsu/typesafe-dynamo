@@ -1,4 +1,4 @@
-import { mockValuesReducer, valuesConstructor } from "./values";
+import { valuesConstructor } from "./values";
 
 describe("ValueReducer", () => {
   type User = {
@@ -26,19 +26,5 @@ describe("ValueReducer", () => {
     expect(result.Item.updatedAt).toBeDefined();
 
     expect(result.Item.createdAt).toBeDefined();
-  });
-});
-
-describe("ValueReducer", () => {
-  test("should parse", () => {
-    const result = mockValuesReducer({
-      name: "Oh",
-    })({});
-
-    expect(result).toStrictEqual({
-      values: {
-        name: "Oh",
-      },
-    });
   });
 });

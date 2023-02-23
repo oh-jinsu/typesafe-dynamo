@@ -1,6 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import { acceptableObjectMapper } from "../mappers/acceptable";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
@@ -29,14 +29,4 @@ export function nextOfConstructor<Schema, PK extends keyof Schema, SK extends ke
       ExclusiveStartKey: acceptableObjectMapper(toDateString)(params),
     });
   };
-}
-
-export type MockNextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = MockReducer<NextOfReducer<Schema, PK, SK>, "nextOf">;
-
-export function mockNextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[params]: Parameters<MockNextOfReducer<Schema, PK, SK>>
-): ReturnType<MockNextOfReducer<Schema, PK, SK>> {
-  return () => ({
-    nextOf: params,
-  });
 }

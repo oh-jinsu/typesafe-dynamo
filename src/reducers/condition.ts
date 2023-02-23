@@ -1,15 +1,19 @@
 import { DynamoDB } from "aws-sdk";
 import { attributeNamesMapper, attributeValuesMapper } from "../mappers/attributes";
 import { preffix } from "../mappers/preffix";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
 };
 
+export type ConditionReducerArguments<Schema, PK extends keyof Schema, SK extends keyof Schema> =
+  | [Partial<Pick<Schema, PK | SK>>]
+  | [string, Partial<Pick<Schema, PK | SK>>];
+
 export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
-  params: Partial<Pick<Schema, PK | SK>>,
-) => ReducerSlice<DynamoDB.QueryInput, "KeyConditionExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues">;
+  ...params: ConditionReducerArguments<Schema, PK, SK>
+) => ReducerSlice<DynamoDB.QueryInput, "KeyConditionExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues" | "IndexName">;
 
 /**
  * Pass the entry of the partion key or the sort key.
@@ -26,32 +30,38 @@ export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof S
  * ```
  */
 export function conditionConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): ConditionReducer<Schema, PK, SK> {
-  return (params) => {
-    return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
-      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(params)
+  return (...[first, second]) => {
+    if (typeof first === "string") {
+      return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
+        IndexName: first,
+        KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(second ?? {})
+          .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
+          .join(" and ")}`,
+
+        ExpressionAttributeNames: {
+          ...(ExpressionAttributeNames ?? {}),
+          ...attributeNamesMapper()(second),
+        },
+        ExpressionAttributeValues: {
+          ...(ExpressionAttributeValues ?? {}),
+          ...attributeValuesMapper(toDateString)(second),
+        },
+      });
+    }
+
+    return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues, IndexName }) => ({
+      IndexName: IndexName,
+      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(first)
         .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
         .join(" and ")}`,
       ExpressionAttributeNames: {
         ...(ExpressionAttributeNames ?? {}),
-        ...attributeNamesMapper()(params),
+        ...attributeNamesMapper()(first),
       },
       ExpressionAttributeValues: {
         ...(ExpressionAttributeValues ?? {}),
-        ...attributeValuesMapper(toDateString)(params),
+        ...attributeValuesMapper(toDateString)(first),
       },
     });
   };
-}
-
-export type MockConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = MockReducer<ConditionReducer<Schema, PK, SK>, "condition">;
-
-export function mockConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema>(
-  ...[params]: Parameters<MockConditionReducer<Schema, PK, SK>>
-): ReturnType<MockConditionReducer<Schema, PK, SK>> {
-  return ({ condition }) => ({
-    condition: {
-      ...(condition ?? {}),
-      ...params,
-    },
-  });
 }

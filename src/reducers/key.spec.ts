@@ -1,4 +1,4 @@
-import { keyConstructor, mockKeyReducer } from "./key";
+import { keyConstructor } from "./key";
 
 describe("KeyReducer", () => {
   type User = {
@@ -15,20 +15,6 @@ describe("KeyReducer", () => {
 
     expect(result).toStrictEqual({
       Key: {
-        id: "uuid",
-      },
-    });
-  });
-});
-
-describe("MockKeyReducer", () => {
-  test("should return a key property", () => {
-    const result = mockKeyReducer({
-      id: "uuid",
-    })({});
-
-    expect(result).toStrictEqual({
-      key: {
         id: "uuid",
       },
     });

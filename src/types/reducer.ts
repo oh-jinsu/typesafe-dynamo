@@ -14,7 +14,7 @@ export type MockReducerSlice<T extends string | number | symbol, U> = (prev: {
 
 export type AnyReducer = (...params: any) => (prev: any) => any;
 
-export type MockReducer<T extends AnyReducer, U extends string | number | symbol> = (...params: Parameters<T>) => MockReducerSlice<U, Parameters<T>[0]>;
+export type MockReducer<T extends AnyReducer, U extends string | number | symbol> = (...params: Parameters<T>) => MockReducerSlice<U, Parameters<T>>;
 
 export type MockSpreadReducer<T extends AnyReducer, U extends string> = (...params: Parameters<T>) => MockReducerSlice<U, Parameters<T>>;
 

@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 export type LimitReducer = (params: number) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "Limit">;
 
@@ -20,13 +20,5 @@ export type LimitReducer = (params: number) => ReducerSlice<DynamoDB.QueryInput 
 export function limitConstructor(): LimitReducer {
   return (params) => () => ({
     Limit: params,
-  });
-}
-
-export type MockLimitReducer = MockReducer<LimitReducer, "limit">;
-
-export function mockLimitReducer(...[params]: Parameters<MockLimitReducer>): ReturnType<MockLimitReducer> {
-  return () => ({
-    limit: params,
   });
 }

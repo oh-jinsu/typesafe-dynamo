@@ -1,7 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { acceptableObjectMapper } from "../mappers/acceptable";
 import { DateColumnList } from "../types/date_column_list";
-import { MockReducer, ReducerSlice } from "../types/reducer";
+import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   toDateString: (value: Date) => string;
@@ -36,15 +36,4 @@ export function valuesConstructor<Schema>({ toDateString }: Context) {
         }),
       },
     });
-}
-
-export type MockValuesReducer<Schema> = MockReducer<ValuesReducer<Schema>, "values">;
-
-export function mockValuesReducer<Schema>(...[params]: Parameters<MockValuesReducer<Schema>>): ReturnType<MockValuesReducer<Schema>> {
-  return ({ values }) => ({
-    values: {
-      ...(values ?? {}),
-      ...params,
-    },
-  });
 }
