@@ -3,12 +3,13 @@ import { acceptableObjectMapper } from "../mappers/acceptable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
+  indexName?: string;
   toDateString: (value: Date) => string;
 };
 
 export type NextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
   params: Pick<Schema, PK | SK>,
-) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "ExclusiveStartKey">;
+) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "ExclusiveStartKey" | "IndexName">;
 
 /**
  * The key of first item that this operation will evaluate
@@ -23,9 +24,13 @@ export type NextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Sche
  *
  * ```
  */
-export function nextOfConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): NextOfReducer<Schema, PK, SK> {
+export function nextOfConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({
+  toDateString,
+  indexName,
+}: Context): NextOfReducer<Schema, PK, SK> {
   return (params) => {
     return () => ({
+      IndexName: indexName,
       ExclusiveStartKey: acceptableObjectMapper(toDateString)(params),
     });
   };

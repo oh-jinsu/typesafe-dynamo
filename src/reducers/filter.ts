@@ -4,12 +4,13 @@ import { preffix } from "../mappers/preffix";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
+  indexName?: string;
   toDateString: (value: Date) => string;
 };
 
 export type FilterReducer<Schema, PK extends keyof Schema> = (
   params: Partial<Omit<Schema, PK>>,
-) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "FilterExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues">;
+) => ReducerSlice<DynamoDB.QueryInput | DynamoDB.ScanInput, "FilterExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues" | "IndexName">;
 
 /**
  * Filter results with conditions.
@@ -25,9 +26,10 @@ export type FilterReducer<Schema, PK extends keyof Schema> = (
  *
  * ```
  */
-export function filterConstructor<Schema, PK extends keyof Schema>({ toDateString }: Context): FilterReducer<Schema, PK> {
+export function filterConstructor<Schema, PK extends keyof Schema>({ toDateString, indexName }: Context): FilterReducer<Schema, PK> {
   return (params) => {
     return ({ FilterExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
+      IndexName: indexName,
       FilterExpression: `${FilterExpression ? `${FilterExpression} and ` : ""}${Object.keys(params)
         .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
         .join(" and ")}`,

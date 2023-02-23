@@ -12,14 +12,15 @@ import {
   removeConstructor,
   RemoveOperation,
 } from "./operations";
+import { GSIManifest } from "./types/gsi";
 
 import { OperationProps } from "./types/operation";
 
 export * from "./operations";
 
-export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
+export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema>> = {
   get: GetOperation<Schema, PK, SK>;
-  query: QueryOperation<Schema, PK, SK>;
+  query: QueryOperation<Schema, PK, SK, GSI>;
   scan: ScanOperation<Schema, PK, SK>;
   put: PutOperation<Schema>;
   update: UpdateOperation<Schema, PK, SK>;
@@ -32,13 +33,15 @@ export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema>
  * The second generic parameter `PK` receives a `keyof Schema` as the partion key.
  * The third generic parameter `SK` receives a `keyof Schema` as the sort key. The last one can be ignored.
  */
-export default function typesafe<Schema, PK extends keyof Schema, SK extends keyof Schema = never>(...props: OperationProps): Operations<Schema, PK, SK> {
+export default function typesafe<Schema, PK extends keyof Schema, SK extends keyof Schema = never, GSI extends GSIManifest<Schema> = Record<string, never>>(
+  ...props: OperationProps
+): Operations<Schema, PK, SK, GSI> {
   return {
-    get: getConstructor<Schema, PK, SK>(...props),
-    query: queryConstructor<Schema, PK, SK>(...props),
-    scan: scanConstructor<Schema, PK, SK>(...props),
-    put: putConstructor<Schema>(...props),
-    update: updateConstructor<Schema, PK, SK>(...props),
-    remove: removeConstructor<Schema, PK, SK>(...props),
+    get: getConstructor(...props),
+    query: queryConstructor(...props),
+    scan: scanConstructor(...props),
+    put: putConstructor(...props),
+    update: updateConstructor(...props),
+    remove: removeConstructor(...props),
   };
 }

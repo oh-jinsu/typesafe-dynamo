@@ -31,30 +31,6 @@ describe("ConditionReducer", () => {
     });
   });
 
-  test("should parse with an index name", () => {
-    const toDateString = (value: Date) => value.toISOString();
-
-    const condition = conditionConstructor<User, "id", "name">({ toDateString });
-
-    const result = condition("indexname", {
-      id: "uuid",
-      name: "Jinsu",
-    })({});
-
-    expect(result).toStrictEqual({
-      IndexName: "indexname",
-      KeyConditionExpression: "#id = :id and #name = :name",
-      ExpressionAttributeNames: {
-        "#id": "id",
-        "#name": "name",
-      },
-      ExpressionAttributeValues: {
-        ":id": "uuid",
-        ":name": "Jinsu",
-      },
-    });
-  });
-
   test("should parse continuously", () => {
     const toDateString = (value: Date) => value.toISOString();
 

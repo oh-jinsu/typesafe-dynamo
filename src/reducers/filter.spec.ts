@@ -18,6 +18,7 @@ describe("FilterReducer", () => {
     })({});
 
     expect(result).toStrictEqual({
+      IndexName: undefined,
       FilterExpression: "#name = :name and #createdAt = :createdAt",
       ExpressionAttributeNames: {
         "#name": "name",
@@ -44,6 +45,7 @@ describe("FilterReducer", () => {
     );
 
     expect(result).toStrictEqual({
+      IndexName: undefined,
       FilterExpression: "#name = :name and #createdAt = :createdAt",
       ExpressionAttributeNames: {
         "#name": "name",

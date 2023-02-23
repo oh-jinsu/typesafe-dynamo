@@ -16,13 +16,12 @@ describe("MockCondition", () => {
   });
 
   test("should parse with index", () => {
-    const result = mockConditionReducer("index", {
+    const result = mockConditionReducer({
       id: "1",
     })({});
 
     expect(result).toStrictEqual({
       condition: [
-        "index",
         {
           id: "1",
         },
@@ -34,32 +33,13 @@ describe("MockCondition", () => {
     const result = mockConditionReducer({
       id: "2",
     })(
-      mockConditionReducer("index", {
+      mockConditionReducer({
         id: "1",
       })({}),
     );
 
     expect(result).toStrictEqual({
       condition: [
-        {
-          id: "2",
-        },
-      ],
-    });
-  });
-
-  test("should parse with index continously", () => {
-    const result = mockConditionReducer("second", {
-      id: "2",
-    })(
-      mockConditionReducer("index", {
-        id: "1",
-      })({}),
-    );
-
-    expect(result).toStrictEqual({
-      condition: [
-        "second",
         {
           id: "2",
         },

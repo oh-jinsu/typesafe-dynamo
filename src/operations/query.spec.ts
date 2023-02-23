@@ -18,10 +18,7 @@ describe("Query operation", () => {
     "id",
     "name",
     {
-      "user-gsi": {
-        pk: "id";
-        sk: "createdAt";
-      };
+      "name-createdAt-index": ["name", "createdAt"];
     }
   >(client, "test");
 
@@ -88,5 +85,21 @@ describe("Query operation", () => {
     ]);
 
     expect(result.length).toBe(2);
+  });
+
+  test("should return objects by index", async () => {
+    const result = await query(({ indexName }) => [
+      indexName("name-createdAt-index").condition({
+        name: "static-user",
+      }),
+    ]);
+
+    expect(result).toStrictEqual([
+      {
+        id: "0",
+        name: "static-user",
+        createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      },
+    ]);
   });
 });

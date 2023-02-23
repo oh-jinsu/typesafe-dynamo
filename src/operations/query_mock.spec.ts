@@ -8,7 +8,7 @@ describe("BuildMockQuery", () => {
     createdAt: Date;
   };
 
-  type TestOperation = QueryOperation<User, "id", "name">;
+  type TestOperation = QueryOperation<User, "id", "name", Record<string, never>>;
 
   test("should return the passed id", async () => {
     const query = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
@@ -16,8 +16,8 @@ describe("BuildMockQuery", () => {
     query.mockImplementation(
       buildMockQuery(({ condition }) => [
         {
-          id: (condition[0] as any).id ?? "",
-          name: (condition[0] as any).name ?? "",
+          id: condition[0].id ?? "",
+          name: condition[0].name ?? "",
           createdAt: new Date(),
         },
       ]),

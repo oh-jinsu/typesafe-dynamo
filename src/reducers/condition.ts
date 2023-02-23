@@ -4,15 +4,12 @@ import { preffix } from "../mappers/preffix";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
+  indexName?: string;
   toDateString: (value: Date) => string;
 };
 
-export type ConditionReducerArguments<Schema, PK extends keyof Schema, SK extends keyof Schema> =
-  | [Partial<Pick<Schema, PK | SK>>]
-  | [string, Partial<Pick<Schema, PK | SK>>];
-
 export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
-  ...params: ConditionReducerArguments<Schema, PK, SK>
+  params: Partial<Pick<Schema, PK | SK>>,
 ) => ReducerSlice<DynamoDB.QueryInput, "KeyConditionExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues" | "IndexName">;
 
 /**
@@ -29,38 +26,24 @@ export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof S
  *
  * ```
  */
-export function conditionConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): ConditionReducer<Schema, PK, SK> {
-  return (...[first, second]) => {
-    if (typeof first === "string") {
-      return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
-        IndexName: first,
-        KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(second ?? {})
-          .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
-          .join(" and ")}`,
-
-        ExpressionAttributeNames: {
-          ...(ExpressionAttributeNames ?? {}),
-          ...attributeNamesMapper()(second),
-        },
-        ExpressionAttributeValues: {
-          ...(ExpressionAttributeValues ?? {}),
-          ...attributeValuesMapper(toDateString)(second),
-        },
-      });
-    }
-
-    return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues, IndexName }) => ({
-      IndexName: IndexName,
-      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(first)
+export function conditionConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({
+  toDateString,
+  indexName,
+}: Context): ConditionReducer<Schema, PK, SK> {
+  return (params) => {
+    return ({ KeyConditionExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
+      IndexName: indexName,
+      KeyConditionExpression: `${KeyConditionExpression ? `${KeyConditionExpression} and ` : ""}${Object.keys(params)
         .map((key) => `${preffix("#")(key)} = ${preffix(":")(key)}`)
         .join(" and ")}`,
+
       ExpressionAttributeNames: {
         ...(ExpressionAttributeNames ?? {}),
-        ...attributeNamesMapper()(first),
+        ...attributeNamesMapper()(params),
       },
       ExpressionAttributeValues: {
         ...(ExpressionAttributeValues ?? {}),
-        ...attributeValuesMapper(toDateString)(first),
+        ...attributeValuesMapper(toDateString)(params),
       },
     });
   };

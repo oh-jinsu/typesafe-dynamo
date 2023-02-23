@@ -14,6 +14,7 @@ describe("NextOfReducer", () => {
     })({});
 
     expect(result).toStrictEqual({
+      IndexName: undefined,
       ExclusiveStartKey: {
         id: "uuid",
       },
