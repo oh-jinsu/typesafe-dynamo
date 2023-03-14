@@ -2,6 +2,7 @@ import { DynamoDB } from "aws-sdk";
 import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
 import { expressionReducer } from "../mappers/expression";
 import { DateColumnList } from "../types/date_column_list";
+import { PuttableRecordOf } from "../types/puttable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
@@ -9,7 +10,7 @@ type Context = {
 };
 
 export type ReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
-  params: Partial<Omit<Schema, PK | SK | DateColumnList>>,
+  params: PuttableRecordOf<Partial<Omit<Schema, PK | SK | DateColumnList>>>,
 ) => ReducerSlice<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues">;
 
 /**

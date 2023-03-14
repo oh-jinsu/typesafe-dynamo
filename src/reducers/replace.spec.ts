@@ -42,7 +42,7 @@ describe("ReplaceReducer", () => {
       age: 25,
     })(
       replace({
-        name: "Jinsu",
+        name: "jinsu",
       })({}),
     );
 
@@ -54,7 +54,7 @@ describe("ReplaceReducer", () => {
 
     expect(result.ExpressionAttributeNames?.["#updatedAt"]).toBe("updatedAt");
 
-    expect(result.ExpressionAttributeValues?.[":name"]).toBe("Jinsu");
+    expect(result.ExpressionAttributeValues?.[":name"]).toBe("jinsu");
 
     expect(result.ExpressionAttributeValues?.[":age"]).toBe(25);
 

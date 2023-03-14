@@ -17,8 +17,8 @@ describe("BuildMockUpdate", () => {
     update.mockImplementation(
       buildMockUpdate(({ key, replace }) => ({
         id: key[0].id,
-        name: replace[0].name ?? "",
-        age: replace[0].age ?? 0,
+        name: replace[0].name as string,
+        age: replace[0].age as number,
         createdAt: new Date(),
       })),
     );

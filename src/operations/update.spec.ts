@@ -13,6 +13,7 @@ describe("UpdateOperation", () => {
     birth?: {
       at: Date;
     };
+    roles: string[];
     createdAt: Date;
   };
 
@@ -27,6 +28,7 @@ describe("UpdateOperation", () => {
       values({
         id,
         name: "generated-user",
+        roles: ["user"],
         birth: {
           at: new Date(),
         },
@@ -39,6 +41,7 @@ describe("UpdateOperation", () => {
         name: "generated-user",
       }),
       replace({
+        roles: ["admin"],
         birth: {
           at: new Date(),
         },
@@ -48,6 +51,8 @@ describe("UpdateOperation", () => {
     expect(result.id).toBe(id);
 
     expect(result.name).toBe("generated-user");
+
+    expect(result.roles).toStrictEqual(["admin"]);
 
     expect(result.birth?.at).toBeInstanceOf(Date);
 
@@ -59,6 +64,7 @@ describe("UpdateOperation", () => {
       values({
         id,
         name: "generated-user",
+        roles: ["user"],
         birth: {
           at: new Date(),
         },
@@ -71,6 +77,7 @@ describe("UpdateOperation", () => {
         name: "generated-user",
       }),
       replace({
+        roles: ["admin"],
         birth: undefined,
       }),
     ]);
@@ -78,6 +85,8 @@ describe("UpdateOperation", () => {
     expect(result.id).toBe(id);
 
     expect(result.name).toBe("generated-user");
+
+    expect(result.roles).toStrictEqual(["admin"]);
 
     expect(result.birth).toBeNull();
 

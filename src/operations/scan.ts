@@ -6,8 +6,7 @@ import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
-import { notExists } from "../mappers/key_functions";
-import { or, equalWith } from "../mappers/value_operators";
+import { or, equalWith, notExists } from "../mappers/puttable";
 
 export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   filter: FilterReducer<Schema, PK>;

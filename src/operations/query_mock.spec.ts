@@ -16,8 +16,8 @@ describe("BuildMockQuery", () => {
     query.mockImplementation(
       buildMockQuery(({ condition }) => [
         {
-          id: condition[0].id ?? "",
-          name: condition[0].name ?? "",
+          id: condition[0].id as string,
+          name: condition[0].name as string,
           createdAt: new Date(),
         },
       ]),

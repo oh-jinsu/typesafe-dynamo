@@ -18,7 +18,7 @@ import { OperationProps } from "./types/operation";
 
 export * from "./operations";
 
-export * from "./mappers/value_operators";
+export * from "./mappers/puttable";
 
 export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema>> = {
   get: GetOperation<Schema, PK, SK>;

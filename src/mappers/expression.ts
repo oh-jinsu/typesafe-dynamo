@@ -1,5 +1,6 @@
-import { extractValueOperator } from "./extract";
+import { MultiPuttable } from "../types/puttable";
 import { preffix } from "./preffix";
+import { toPuttable } from "./puttable";
 
 export function append(str: string) {
   return (acc: string | undefined, cur: string) => {
@@ -20,15 +21,17 @@ export function expressionReducer(str: string, index?: number) {
     return append(str)(
       acc,
       (() => {
-        if (value instanceof Function) {
-          return `${value(preffix("#")(key))}`;
+        const puttable = toPuttable(value);
+
+        if (puttable.op instanceof Function) {
+          return `${puttable.op(preffix("#")(key))}`;
         }
 
-        if (Array.isArray(value)) {
-          return `(${value.map((e) => [key, e]).reduce((pre, cur, i) => expressionReducer(" or ", i)(pre, cur), "")})`;
+        if (puttable instanceof MultiPuttable) {
+          return `(${puttable.values.map((e) => [key, e]).reduce((pre, cur, i) => expressionReducer(` ${puttable.op} `, i)(pre, cur), "")})`;
         }
 
-        return `${preffix("#")(key)} ${extractValueOperator(value)} ${preffix(":")(index === undefined ? key : `${key}_${index}`)}`;
+        return `${preffix("#")(key)} ${puttable.op} ${preffix(":")(index === undefined ? key : `${key}_${index}`)}`;
       })(),
     );
   };

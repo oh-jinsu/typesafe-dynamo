@@ -1,6 +1,7 @@
 import { DynamoDB } from "aws-sdk";
 import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
 import { expressionReducer } from "../mappers/expression";
+import { PuttableRecordOf } from "../types/puttable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
@@ -9,7 +10,7 @@ type Context = {
 };
 
 export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
-  params: Partial<Pick<Schema, PK | SK>>,
+  params: PuttableRecordOf<Partial<Pick<Schema, PK | SK>>>,
 ) => ReducerSlice<DynamoDB.QueryInput, "KeyConditionExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues" | "IndexName">;
 
 /**

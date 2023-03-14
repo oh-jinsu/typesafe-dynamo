@@ -17,7 +17,7 @@ describe("BuildMockScan", () => {
       buildMockScan(({ filter }) => [
         {
           id: "uuid",
-          name: filter[0].name ?? "",
+          name: filter[0].name as string,
           createdAt: new Date(),
         },
       ]),

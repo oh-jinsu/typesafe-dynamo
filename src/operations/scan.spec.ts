@@ -1,5 +1,5 @@
 import { DynamoDB } from "aws-sdk";
-import { lessThan, or } from "../mappers/value_operators";
+import { lessThan, or } from "../mappers/puttable";
 import { putConstructor } from "./put";
 import { removeConstructor } from "./remove";
 import { scanConstructor } from "./scan";

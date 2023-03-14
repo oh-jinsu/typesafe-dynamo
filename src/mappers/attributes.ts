@@ -1,6 +1,7 @@
+import { MultiPuttable } from "../types/puttable";
 import { acceptableValueMapper } from "./acceptable";
-import { extractValue } from "./extract";
 import { preffix } from "./preffix";
+import { toPuttable } from "./puttable";
 
 /**
  * Map an object to the form that is acceptable for [`ExpressionAttributeNames`]
@@ -21,18 +22,22 @@ export function attributeNamesReducer() {
  */
 export function attributeValuesReducer(toDateString: (value: Date) => string, index?: number) {
   return function reducer(acc: any, [key, value]: any): any {
-    const extracted = extractValue(value);
+    const puttable = toPuttable(value);
 
-    if (Array.isArray(extracted)) {
+    if (puttable.op instanceof Function) {
+      return acc;
+    }
+
+    if (puttable instanceof MultiPuttable) {
       return {
         ...(acc ?? {}),
-        ...extracted.map((e) => [key, e]).reduce((pre, curr, i) => attributeValuesReducer(toDateString, i)(pre, curr), {}),
+        ...puttable.values.map((e) => [key, e]).reduce((pre, curr, i) => attributeValuesReducer(toDateString, i)(pre, curr), {}),
       };
     }
 
     return {
       ...(acc ?? {}),
-      [preffix(":")(index === undefined ? key : `${key}_${index}`)]: acceptableValueMapper(toDateString)(extracted),
+      [preffix(":")(index === undefined ? key : `${key}_${index}`)]: acceptableValueMapper(toDateString)(puttable.value),
     };
   };
 }
