@@ -8,32 +8,28 @@ import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
-import { GSIManifest } from "../types/gsi";
+import { GSIList } from "../types/gsi";
 import { equalWith, notExists, or } from "../mappers/puttable";
 
-export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema>> = {
+export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema>> = {
   condition: ConditionReducer<Schema, PK, SK>;
   filter: FilterReducer<Schema, PK>;
   nextOf: NextOfReducer<Schema, PK, SK>;
   indexName: <IndexName extends keyof GSI>(
     name: IndexName,
-  ) => {
-    condition: ConditionReducer<Schema, GSI[IndexName][0], GSI[IndexName][1]>;
-    filter: FilterReducer<Schema, GSI[IndexName][0]>;
-    nextOf: NextOfReducer<Schema, GSI[IndexName][0], GSI[IndexName][1]>;
-  };
+  ) => Omit<QueryReducers<Schema, GSI[IndexName][0], GSI[IndexName][1], Record<string, never>>, "indexName">;
   select: SelectReducer<Schema>;
   limit: LimitReducer;
   direction: DirectionReducer;
 };
 
-export type QueryOperation<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema> = Record<string, never>> = Operation<
+export type QueryOperation<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema> = Record<string, never>> = Operation<
   QueryReducers<Schema, PK, SK, GSI>,
   DynamoDB.QueryInput,
   Schema[]
 >;
 
-export function queryConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema> = Record<string, never>>(
+export function queryConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema> = Record<string, never>>(
   ...[client, name, option]: OperationProps
 ): QueryOperation<Schema, PK, SK, GSI> {
   return async (builder) => {
@@ -62,10 +58,17 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
         indexName: <IndexName extends keyof GSI>(value: IndexName) => {
           const indexName = value.toString();
 
+          type GSIPK = GSI[IndexName][0];
+
+          type GSISK = GSI[IndexName][1];
+
           return {
-            condition: conditionConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
-            filter: filterConstructor<Schema, GSI[IndexName][0]>({ indexName, toDateString }),
-            nextOf: nextOfConstructor<Schema, GSI[IndexName][0], GSI[IndexName][1]>({ indexName, toDateString }),
+            condition: conditionConstructor<Schema, GSIPK, GSISK>({ indexName, toDateString }),
+            filter: filterConstructor<Schema, GSIPK>({ indexName, toDateString }),
+            nextOf: nextOfConstructor<Schema, GSIPK, GSISK>({ indexName, toDateString }),
+            select: selectConstructor<Schema>(),
+            limit: limitConstructor(),
+            direction: directionConstructor(),
           };
         },
         limit,

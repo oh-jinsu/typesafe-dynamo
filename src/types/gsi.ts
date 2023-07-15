@@ -1,3 +1,5 @@
-export type GSIManifest<Schema> = Record<string, GSIElement<Schema>>;
+export type GSIIndexName = string;
 
-export type GSIElement<Schema> = [keyof Schema, keyof Schema];
+export type GSIList<Schema> = Record<GSIIndexName, GSIKeyPair<Schema>>;
+
+export type GSIKeyPair<Schema> = [keyof Schema, keyof Schema];

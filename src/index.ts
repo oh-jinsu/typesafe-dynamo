@@ -12,7 +12,7 @@ import {
   removeConstructor,
   RemoveOperation,
 } from "./operations";
-import { GSIManifest } from "./types/gsi";
+import { GSIList } from "./types/gsi";
 
 import { OperationProps } from "./types/operation";
 
@@ -20,7 +20,7 @@ export * from "./operations";
 
 export * from "./mappers/puttable";
 
-export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIManifest<Schema>> = {
+export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema>> = {
   get: GetOperation<Schema, PK, SK>;
   query: QueryOperation<Schema, PK, SK, GSI>;
   scan: ScanOperation<Schema, PK, SK>;
@@ -35,7 +35,7 @@ export type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema,
  * The second generic parameter `PK` receives a `keyof Schema` as the partion key.
  * The third generic parameter `SK` receives a `keyof Schema` as the sort key. The last one can be ignored.
  */
-export default function typesafe<Schema, PK extends keyof Schema, SK extends keyof Schema = never, GSI extends GSIManifest<Schema> = Record<string, never>>(
+export default function typesafe<Schema, PK extends keyof Schema, SK extends keyof Schema = never, GSI extends GSIList<Schema> = Record<string, never>>(
   ...props: OperationProps
 ): Operations<Schema, PK, SK, GSI> {
   return {
