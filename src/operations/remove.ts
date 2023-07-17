@@ -3,6 +3,7 @@ import { keyConstructor, KeyReducer } from "../reducers/key";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { replaceConstructor } from "../reducers/replace";
+import { withError } from "./with_error";
 
 export type RemoveReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -22,31 +23,31 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
 
     const key = keyConstructor<Schema, PK, SK>({ toDateString });
 
-    if (option?.soft) {
-      const input = [
-        ...builder({
-          key,
-        }),
-        replaceConstructor({ toDateString })({
-          deletedAt: new Date(),
-        }),
-      ].reduce(fold, {
-        TableName: name,
-      });
-
-      await client.update(input).promise();
-
-      return;
-    }
-
-    await client
-      .delete(
-        builder({
-          key,
-        }).reduce(fold, {
+    await withError(() => {
+      if (option?.soft) {
+        const input = [
+          ...builder({
+            key,
+          }),
+          replaceConstructor({ toDateString })({
+            deletedAt: new Date(),
+          }),
+        ].reduce(fold, {
           TableName: name,
-        }),
-      )
-      .promise();
+        });
+
+        return client.update(input).promise();
+      }
+
+      return client
+        .delete(
+          builder({
+            key,
+          }).reduce(fold, {
+            TableName: name,
+          }),
+        )
+        .promise();
+    });
   };
 }

@@ -3,6 +3,7 @@ import { usefulObjectMapper } from "../mappers/useful";
 import { valuesConstructor, ValuesReducer } from "../reducers/values";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { withError } from "./with_error";
 
 export type PutReducers<Schema> = {
   values: ValuesReducer<Schema>;
@@ -24,7 +25,7 @@ export function putConstructor<Schema>(...[client, name, option]: OperationProps
       TableName: name,
     });
 
-    await client.put(params).promise();
+    await withError(() => client.put(params).promise());
 
     return usefulObjectMapper(fromDateString)(params.Item);
   };

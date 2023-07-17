@@ -10,6 +10,7 @@ import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 import { GSIList } from "../types/gsi";
 import { equalWith, notExists, or } from "../mappers/puttable";
+import { withError } from "./with_error";
 
 export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema>> = {
   condition: ConditionReducer<Schema, PK, SK>;
@@ -86,13 +87,16 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
 
       return commons;
     })();
-    const { Items } = await client
-      .query(
-        reducers.reduce(fold, {
-          TableName: name,
-        }),
-      )
-      .promise();
+
+    const { Items } = await withError(() =>
+      client
+        .query(
+          reducers.reduce(fold, {
+            TableName: name,
+          }),
+        )
+        .promise(),
+    );
 
     return usefulObjectMapper(fromDateString)(Items);
   };

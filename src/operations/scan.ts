@@ -7,6 +7,7 @@ import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 import { or, equalWith, notExists } from "../mappers/puttable";
+import { withError } from "./with_error";
 
 export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   filter: FilterReducer<Schema, PK>;
@@ -60,7 +61,7 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
       TableName: name,
     });
 
-    const { Items } = await client.scan(input).promise();
+    const { Items } = await withError(() => client.scan(input).promise());
 
     return usefulObjectMapper(fromDateString)(Items);
   };

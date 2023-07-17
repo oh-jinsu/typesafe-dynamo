@@ -4,6 +4,7 @@ import { keyConstructor, KeyReducer } from "../reducers/key";
 import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { withError } from "./with_error";
 
 export type GetReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -28,16 +29,18 @@ export function getConstructor<Schema, PK extends keyof Schema, SK extends keyof
 
     const select = selectConstructor<Schema>();
 
-    const { Item } = await client
-      .get(
-        builder({
-          key,
-          select,
-        }).reduce(fold, {
-          TableName: name,
-        }),
-      )
-      .promise();
+    const { Item } = await withError(() =>
+      client
+        .get(
+          builder({
+            key,
+            select,
+          }).reduce(fold, {
+            TableName: name,
+          }),
+        )
+        .promise(),
+    );
 
     if (!Item) {
       return;

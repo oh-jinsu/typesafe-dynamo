@@ -429,3 +429,28 @@ const result = await table.remove(({ key }) => [
     })
 ])
 ```
+
+## Errors
+
+Opertions throw `AWSError` if internal error occurs. Use `try`-`catch`
+
+```ts
+type User = {
+    id: string;
+    name: string;
+    age: number;
+}
+
+const table = typesafe<User, "id">(client, name)
+
+try {
+    const result = await table.get(({ key }) => [
+        key({ id: "01" })
+    ])
+} catch (e: any) {
+    if ("statusCode" in e) {
+        //TODO: Error handling
+    }
+}
+
+```
