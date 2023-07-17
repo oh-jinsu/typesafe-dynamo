@@ -1,9 +1,16 @@
 {
   "name": "typesafe-dynamo",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "Provide type-safe query operations for AWS DynamoDB.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "keywords": [
+    "AWS",
+    "DynamoDB",
+    "Typescript",
+    "Type Safe",
+    "NoSQL"
+  ],
   "scripts": {
     "test": "jest --coverage",
     "deploy": "npm i && rm -rf lib && tsc -d && npm publish"
