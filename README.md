@@ -52,7 +52,7 @@ const result = await user.scan(() => [{
 }]);
 ```
 
-Or you can even use some of features of this library.
+Or you can even use some of the features of this library.
 
 ```ts
 const result = await user.scan(({ select }) => [
@@ -69,7 +69,7 @@ const result = await user.scan(({ select }) => [
 function typesafe<Schema, PK, SK, GSI>(...props: OperationProps)
 ```
 
-This function defines the type of your table. `Schema` and `PK` is required generic type parameter. `SK` and `GSI` is optional. Last, you should put your `DynamoDB.DocumentClient` and your table name to the function parameter.
+This function defines the type of your table. `Schema` and `PK` are required generic type parameters. `SK` and `GSI` are optional. Last, you should put your `DynamoDB.DocumentClient` and your table name to the function parameter.
 
 ### Schema
 
@@ -86,7 +86,7 @@ type UserSchema = {
 const table = typesafe<UserSchema, ...>(...)
 ```
 
-You can put anything to the `Schema` type parameter. This type defines the columns and their data types of your table.
+You can put anything to the `Schema` type parameter. This type defines the columns and their data types in your table.
 
 This library automatically adds `updatedAt` to your object putting. Even if your `Schema` does not have the properties.
 
@@ -99,7 +99,7 @@ type PK = "id"
 const table = typesafe<UserSchema, PK, ...>(...)
 ```
 
-`PK` should be one of keys of the `Schema`. It defines the partion key of your DynamoDB table.
+`PK` should be one of the keys of the `Schema`. It defines the partition key of your DynamoDB table.
 
 ### SK
 
@@ -110,7 +110,7 @@ type SK = "age"
 const table = typesafe<UserSchema, PK, SK>(...)
 ```
 
-`SK` should be one of keys of the `Schema`. It defines the sort key of your DynamoDB table.
+`SK` should be one of the keys of the `Schema`. It defines the sort key of your DynamoDB table.
 
 ### GSI
 ```ts
@@ -121,7 +121,7 @@ type GSI = {
 ```ts
 const table = typesafe<UserSchema, PK, SK, GSI>(...)
 ```
-`GSI` should extend `GSIList<Schema>`. The keys of the `GSI` type parameter should be each name of your GSI table. And its value should be an array that has a `PK` element and a `SK` element of your GSI table.
+`GSI` should extend `GSIList<Schema>`. The keys of the `GSI` type parameter should be each name of your GSI table. And its value should be an array that has a `PK` element and an `SK` element of your GSI table.
 
 ### OperationProps
 ```ts
@@ -149,10 +149,10 @@ export type OperationOption = {
 }
 ```
 
-If `soft` is true, the delete opration won't delete an item in your DynamoDB table. Of course you can not find the item by other operations though.
+If `soft` is true, the delete operation won't delete an item in your DynamoDB table. Of course you can not find the item by other operations though.
 
-Also you can configure how your `Date` type field is saved in your DynamoDB table by `toDateString` and `fromDateString` parameter.  
-**Note that these paramaters won't work for now because the internal date validator allows only ISO8601 now. I'll fix it soon.**
+Also, you can configure how your `Date` type field is saved in your DynamoDB table by `toDateString` and `fromDateString` parameters.  
+**Note that these parameters won't work for now because the internal date validator allows only ISO8601 now. I'll fix it soon.**
 
 Check out an example using options:
 ```ts
@@ -174,7 +174,7 @@ type Operations<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI ex
 
 ## GetOperation
 
-This is a type-safe version get operation of DynamoDB. You have 2 functions by which you can manipulate paramters: `key` and `select`.
+This is a type-safe version get operation of DynamoDB. You have 2 functions by which you can manipulate parameters: `key` and `select`.
 
 ### key
 
@@ -192,7 +192,7 @@ const result = await table.get(({ key }) => [
 ])
 ```
 
-Like above, every function is given thorough the paramter of the function parameter of each operation.
+Like above, every function is given through the parameter of the function parameter of each operation.
 
 ### select
 
@@ -205,17 +205,17 @@ type User = {
 
 const table = typesafe<User, "id">(client, name)
 
-const result = await table.get(({ key }) => [
+const result = await table.get(({ key, select }) => [
     key({ id: "01" }),
     select("age", "id")
 ])
 ```
 
-Sometimes you may want to select only some of properties from `Schema`.
+Sometimes you may want to select only some of the properties from the `Schema`.
 
 ## QueryOperation
 
-This is a type-safe version query operation of DynamoDB. You have 7 functions by which you can manipulate paramters: `condition`, `filter`, `nextOf`, `indexName`, `select`, `limit`, `direction`. But I'll omit the `select` function here because it's just the same with the one in `GetOperation`.
+This is a type-safe version query operation of DynamoDB. You have 7 functions by which you can manipulate parameters: `condition`, `filter`, `nextOf`, `indexName`, `select`, `limit`, and `direction`. But I'll omit the `select` function here because it's just the same as the example in `GetOperation`.
 
 ### condition
 
@@ -229,7 +229,7 @@ type User = {
 const table = typesafe<User, "age", "id">(client, name)
 
 const result = await table.query(({ condition }) => [
-    condtion({ age: 30 }),
+    condition({ age: 30 }),
 ])
 ```
 
@@ -247,12 +247,12 @@ type User = {
 const table = typesafe<User, "age", "id">(client, name)
 
 const result = await table.query(({ condition, filter }) => [
-    condtion({ age: 30 }),
+    condition({ age: 30 }),
     filter({ name: "John" })
 ])
 ```
 
-It's going to find every john who is 30 years old.
+It's going to find every John who is 30 years old.
 
 ### nextOf
 
@@ -266,7 +266,7 @@ type User = {
 const table = typesafe<User, "age", "id">(client, name)
 
 const result = await table.query(({ condition, nextOf }) => [
-    condtion({ age: 30 }),
+    condition({ age: 30 }),
     nextOf({ name: "John", age: 30 })
 ])
 ```
@@ -295,7 +295,7 @@ const result = await table.query(({ indexName }) => [
 ])
 ```
 
-It enables you use the Global Secondary Index of your DynamoDB table.
+It enables you to use the Global Secondary Index of your DynamoDB table.
 
 ### limit
 
@@ -309,12 +309,12 @@ type User = {
 const table = typesafe<User, "age", "id">(client, name)
 
 const result = await table.query(({ condition, limit }) => [
-    condtion({ age: 30 }),
+    condition({ age: 30 }),
     limit(10)
 ])
 ```
 
-It's going to find at most 10 users who is 30 years old.
+It's going to find at most 10 users who are 30 years old.
 
 ### direction
 
@@ -339,11 +339,11 @@ const result = await table.query(({ indexName }) => [
 ])
 ```
 
-It's going to find every john but from the oldest.
+It's going to find every John but from the oldest.
 
 ## ScanOperation
 
-This is a type-safe version scan operation of DynamoDB. You have 4 functions by which you can manipulate paramters: `filter`, `nextOf`, `select`, `limit`. But everything is just the same with the `QueryOperation`.
+This is a type-safe version scan operation of DynamoDB. You have 4 functions by which you can manipulate parameters: `filter`, `nextOf`, `select`, and `limit`. But everything is just the same as with `QueryOperation`.
 
 ```ts
 type User = {
@@ -361,7 +361,7 @@ const result = await table.scan(({ filter }) => [
 
 ## PutOperation
 
-This is a type-safe version scan operation of DynamoDB. You have only function by which you can manipulate paramters: `values`.
+This is a type-safe version scan operation of DynamoDB. You have only one function by which you can manipulate parameters: `values`.
 
 ### values
 
@@ -385,7 +385,7 @@ const result = await table.put(({ values }) => [
 
 ## UpdateOperation
 
-This is a type-safe version update operation of DynamoDB. You have 2 functions by which you can manipulate paramters: `key` and `replace`. `key` is just the same as the one in the `GetOperation`. It picks an item with the `PK` and `SK` if it exists.
+This is a type-safe version update operation of DynamoDB. You have 2 functions by which you can manipulate parameters: `key` and `replace`. `key` is just the same as the one in the `GetOperation`. It picks an item with the `PK` and `SK` if it exists.
 
 ### replace
 
@@ -411,7 +411,7 @@ const result = await table.update(({ key, replace }) => [
 
 ## RemoveOperation
 
-This is a type-safe version dete operation of DynamoDB. You have only function by which you can manipulate paramters: `key`. `key` is just the same as the one in the `GetOperation`.
+This is a type-safe version of the delete operation of DynamoDB. You have only one function by which you can manipulate parameters: `key`. `key` is just the same as the one in the `GetOperation`.
 
 ```ts
 type User = {
@@ -432,7 +432,7 @@ const result = await table.remove(({ key }) => [
 
 ## Errors
 
-Opertions throw `AWSError` if internal error occurs. Use `try`-`catch`
+Operations throw `AWSError` if an internal error occurs. Use `try`-`catch`
 
 ```ts
 type User = {
