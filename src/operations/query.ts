@@ -11,6 +11,7 @@ import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 import { GSIList } from "../types/gsi";
 import { equalWith, notExists, or } from "../mappers/puttable";
 import { withError } from "./with_error";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type QueryReducers<Schema, PK extends keyof Schema, SK extends keyof Schema, GSI extends GSIList<Schema>> = {
   condition: ConditionReducer<Schema, PK, SK>;
@@ -34,17 +35,15 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
   ...[client, name, option]: OperationProps
 ): QueryOperation<Schema, PK, SK, GSI> {
   return async (builder) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate, fromDate, validateDate } = getDateMappers(option);
 
-    const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
+    const condition = conditionConstructor<Schema, PK, SK>({ toDate });
 
-    const condition = conditionConstructor<Schema, PK, SK>({ toDateString });
-
-    const filter = filterConstructor<Schema, PK>({ toDateString });
+    const filter = filterConstructor<Schema, PK>({ toDate });
 
     const select = selectConstructor<Schema>();
 
-    const nextOf = nextOfConstructor<Schema, PK, SK>({ toDateString });
+    const nextOf = nextOfConstructor<Schema, PK, SK>({ toDate });
 
     const limit = limitConstructor();
 
@@ -64,9 +63,9 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
           type GSISK = GSI[IndexName][1];
 
           return {
-            condition: conditionConstructor<Schema, GSIPK, GSISK>({ indexName, toDateString }),
-            filter: filterConstructor<Schema, GSIPK>({ indexName, toDateString }),
-            nextOf: nextOfConstructor<Schema, GSIPK, GSISK>({ indexName, toDateString }),
+            condition: conditionConstructor<Schema, GSIPK, GSISK>({ indexName, toDate }),
+            filter: filterConstructor<Schema, GSIPK>({ indexName, toDate }),
+            nextOf: nextOfConstructor<Schema, GSIPK, GSISK>({ indexName, toDate }),
             select: selectConstructor<Schema>(),
             limit: limitConstructor(),
             direction: directionConstructor(),
@@ -98,6 +97,6 @@ export function queryConstructor<Schema, PK extends keyof Schema, SK extends key
         .promise(),
     );
 
-    return usefulObjectMapper(fromDateString)(Items);
+    return usefulObjectMapper(fromDate, validateDate)(Items);
   };
 }

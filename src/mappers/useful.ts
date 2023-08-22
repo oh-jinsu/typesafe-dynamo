@@ -4,16 +4,14 @@ import { mapper } from "./map";
 /**
  * Map a value to the form that is useful for user.
  */
-export function usefulValueMapper(fromDateString: (value: string) => Date) {
+export function usefulValueMapper<DateFormat>(fromDate: (value: DateFormat) => Date, validateDate: (value: unknown) => boolean) {
   return function recursion(value: unknown): any {
-    if (typeof value === "string") {
-      if (/^Object {(.|\n|\r)*}$/.test(value)) {
-        return usefulObjectMapper(fromDateString)(JSON.parse(value.replace("Object ", "")));
-      }
+    if (validateDate(value)) {
+      return fromDate(value as DateFormat);
+    }
 
-      if (/^\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)$/.test(value)) {
-        return fromDateString(value);
-      }
+    if ((value as any)?.constructor === Object) {
+      return usefulObjectMapper(fromDate, validateDate)(value);
     }
 
     return value;
@@ -23,6 +21,6 @@ export function usefulValueMapper(fromDateString: (value: string) => Date) {
 /**
  * Map an object to the form that is useful for user.
  */
-export function usefulObjectMapper(fromDateString: (value: string) => Date) {
-  return mapper(([key, value]) => [toCamelCase(key), usefulValueMapper(fromDateString)(value)]);
+export function usefulObjectMapper<DateFormat>(fromDate: (value: DateFormat) => Date, validateDate: (value: unknown) => boolean) {
+  return mapper(([key, value]) => [toCamelCase(key), usefulValueMapper(fromDate, validateDate)(value)]);
 }

@@ -4,6 +4,7 @@ import { valuesConstructor, ValuesReducer } from "../reducers/values";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { withError } from "./with_error";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type PutReducers<Schema> = {
   values: ValuesReducer<Schema>;
@@ -13,11 +14,9 @@ export type PutOperation<Schema> = Operation<PutReducers<Schema>, DynamoDB.PutIt
 
 export function putConstructor<Schema>(...[client, name, option]: OperationProps): PutOperation<Schema> {
   return async (builder) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate, fromDate, validateDate } = getDateMappers(option);
 
-    const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
-
-    const values = valuesConstructor<Schema>({ toDateString });
+    const values = valuesConstructor<Schema>({ toDate });
 
     const params = builder({
       values,
@@ -27,6 +26,6 @@ export function putConstructor<Schema>(...[client, name, option]: OperationProps
 
     await withError(() => client.put(params).promise());
 
-    return usefulObjectMapper(fromDateString)(params.Item);
+    return usefulObjectMapper(fromDate, validateDate)(params.Item);
   };
 }

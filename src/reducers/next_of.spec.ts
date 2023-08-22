@@ -7,7 +7,7 @@ describe("NextOfReducer", () => {
   };
 
   test("should return a nextOf property", () => {
-    const cursorReducer = nextOfConstructor<User, "id", never>({ toDateString: (value) => value.toISOString() });
+    const cursorReducer = nextOfConstructor<User, "id", never>({ toDate: (value) => value.toISOString() });
 
     const result = cursorReducer({
       id: "uuid",

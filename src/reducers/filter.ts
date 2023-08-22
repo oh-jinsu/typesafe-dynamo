@@ -6,7 +6,7 @@ import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   indexName?: string;
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => any;
 };
 
 export type FilterReducer<Schema, PK extends keyof Schema> = (
@@ -28,13 +28,13 @@ export type FilterReducer<Schema, PK extends keyof Schema> = (
  * ```
  */
 
-export function filterConstructor<Schema, PK extends keyof Schema>({ toDateString, indexName }: Context): FilterReducer<Schema, PK> {
+export function filterConstructor<Schema, PK extends keyof Schema>({ toDate, indexName }: Context): FilterReducer<Schema, PK> {
   return (params) => {
     return ({ FilterExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => ({
       IndexName: indexName,
       FilterExpression: Object.entries(params).reduce(expressionReducer(" and "), FilterExpression),
       ExpressionAttributeNames: Object.entries(params).reduce(attributeNamesReducer(), ExpressionAttributeNames),
-      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
+      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDate), ExpressionAttributeValues),
     });
   };
 }

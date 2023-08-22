@@ -18,9 +18,9 @@ describe("AttributeNamesMapper", () => {
 
 describe("AttributeValuesMapper", () => {
   test("should parse", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const reducer = attributeValuesReducer(toDateString);
+    const reducer = attributeValuesReducer(toDate);
 
     const result = Object.entries({
       lastName: "Oh",

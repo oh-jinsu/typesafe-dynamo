@@ -5,6 +5,7 @@ import { selectConstructor, SelectReducer } from "../reducers/select";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { withError } from "./with_error";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type GetReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -21,11 +22,9 @@ export function getConstructor<Schema, PK extends keyof Schema, SK extends keyof
   ...[client, name, option]: OperationProps
 ): GetOperation<Schema, PK, SK> {
   return async (builder) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate, fromDate, validateDate } = getDateMappers(option);
 
-    const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
-
-    const key = keyConstructor<Schema, PK, SK>({ toDateString });
+    const key = keyConstructor<Schema, PK, SK>({ toDate });
 
     const select = selectConstructor<Schema>();
 
@@ -50,6 +49,6 @@ export function getConstructor<Schema, PK extends keyof Schema, SK extends keyof
       return;
     }
 
-    return usefulObjectMapper(fromDateString)(Item);
+    return usefulObjectMapper(fromDate, validateDate)(Item);
   };
 }

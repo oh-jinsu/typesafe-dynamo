@@ -8,6 +8,7 @@ import { fold } from "../common/fold";
 import { nextOfConstructor, NextOfReducer } from "../reducers/next_of";
 import { or, equalWith, notExists } from "../mappers/puttable";
 import { withError } from "./with_error";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type ScanReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   filter: FilterReducer<Schema, PK>;
@@ -22,15 +23,13 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
   ...[client, name, option]: OperationProps
 ): ScanOperation<Schema, PK, SK> {
   return async (builder) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate, fromDate, validateDate } = getDateMappers(option);
 
-    const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
-
-    const filter = filterConstructor<Schema, PK>({ toDateString });
+    const filter = filterConstructor<Schema, PK>({ toDate });
 
     const select = selectConstructor<Schema>();
 
-    const nextOf = nextOfConstructor<Schema, PK, SK>({ toDateString });
+    const nextOf = nextOfConstructor<Schema, PK, SK>({ toDate });
 
     const limit = limitConstructor();
 
@@ -63,6 +62,6 @@ export function scanConstructor<Schema, PK extends keyof Schema, SK extends keyo
 
     const { Items } = await withError(() => client.scan(input).promise());
 
-    return usefulObjectMapper(fromDateString)(Items);
+    return usefulObjectMapper(fromDate, validateDate)(Items);
   };
 }

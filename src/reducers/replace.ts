@@ -5,7 +5,7 @@ import { PuttableRecordOf } from "../types/puttable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => string;
 };
 
 export type ReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
@@ -30,7 +30,7 @@ export type ReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Sch
  *
  * ```
  */
-export function replaceConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): ReplaceReducer<Schema, PK, SK> {
+export function replaceConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDate }: Context): ReplaceReducer<Schema, PK, SK> {
   return (params) => {
     return ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => {
       const entries = Object.entries({
@@ -40,7 +40,7 @@ export function replaceConstructor<Schema, PK extends keyof Schema, SK extends k
       return {
         UpdateExpression: `set ${entries.reduce(expressionReducer(", "), UpdateExpression?.replace(/^set\s/, ""))}`,
         ExpressionAttributeNames: entries.reduce(attributeNamesReducer(), ExpressionAttributeNames),
-        ExpressionAttributeValues: entries.reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
+        ExpressionAttributeValues: entries.reduce(attributeValuesReducer(toDate), ExpressionAttributeValues),
       };
     };
   };

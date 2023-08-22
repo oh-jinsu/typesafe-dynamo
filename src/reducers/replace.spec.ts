@@ -9,9 +9,9 @@ describe("ReplaceReducer", () => {
   };
 
   test("should parse", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const replace = replaceConstructor<User, "id", never>({ toDateString });
+    const replace = replaceConstructor<User, "id", never>({ toDate });
 
     const result = replace({
       name: "Jinsu",
@@ -30,9 +30,9 @@ describe("ReplaceReducer", () => {
   });
 
   test("should parse continuously", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const replace = replaceConstructor<User, "id", never>({ toDateString });
+    const replace = replaceConstructor<User, "id", never>({ toDate });
 
     const result = replace({
       age: 25,

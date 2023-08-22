@@ -4,7 +4,7 @@ import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   indexName?: string;
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => any;
 };
 
 export type NextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
@@ -24,14 +24,11 @@ export type NextOfReducer<Schema, PK extends keyof Schema, SK extends keyof Sche
  *
  * ```
  */
-export function nextOfConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({
-  toDateString,
-  indexName,
-}: Context): NextOfReducer<Schema, PK, SK> {
+export function nextOfConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDate, indexName }: Context): NextOfReducer<Schema, PK, SK> {
   return (params) => {
     return () => ({
       IndexName: indexName,
-      ExclusiveStartKey: acceptableObjectMapper(toDateString)(params),
+      ExclusiveStartKey: acceptableObjectMapper(toDate)(params),
     });
   };
 }

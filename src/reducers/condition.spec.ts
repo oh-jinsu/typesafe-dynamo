@@ -8,9 +8,9 @@ describe("ConditionReducer", () => {
   };
 
   test("should parse", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const condition = conditionConstructor<User, "id", "name">({ toDateString });
+    const condition = conditionConstructor<User, "id", "name">({ toDate });
 
     const result = condition({
       id: "uuid",
@@ -32,9 +32,9 @@ describe("ConditionReducer", () => {
   });
 
   test("should parse continuously", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const condition = conditionConstructor<User, "id", "name">({ toDateString });
+    const condition = conditionConstructor<User, "id", "name">({ toDate });
 
     const result = condition({
       name: "Jinsu",

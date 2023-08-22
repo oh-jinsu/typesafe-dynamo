@@ -1,6 +1,14 @@
 import { acceptableObjectMapper, acceptableValueMapper } from "./acceptable";
 
 describe("AcceptableValueMapper", () => {
+  test("should return a null", () => {
+    const map = acceptableValueMapper((value) => value.toISOString());
+
+    const result = map(undefined);
+
+    expect(result).toBe(null);
+  });
+
   test("should return an ISO 8601 string", () => {
     const map = acceptableValueMapper((value) => value.toISOString());
 
@@ -24,11 +32,9 @@ describe("AcceptableValueMapper", () => {
       lastName: "Oh",
     });
 
-    expect(result).toBe(
-      `Object ${JSON.stringify({
-        lastName: "Oh",
-      })}`,
-    );
+    expect(result).toStrictEqual({
+      lastName: "Oh",
+    });
   });
 });
 

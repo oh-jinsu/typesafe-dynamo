@@ -4,6 +4,7 @@ import { keyConstructor, KeyReducer } from "../reducers/key";
 import { replaceConstructor, ReplaceReducer } from "../reducers/replace";
 import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type UpdateReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -20,13 +21,11 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
   ...[client, name, option]: OperationProps
 ): UpdateOperation<Schema, PK, SK> {
   return async (reducers) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate, fromDate, validateDate } = getDateMappers(option);
 
-    const fromDateString = option?.fromDateString ?? ((value) => new Date(value));
+    const key = keyConstructor<Schema, PK, SK>({ toDate });
 
-    const key = keyConstructor<Schema, PK, SK>({ toDateString });
-
-    const replace = replaceConstructor<Schema, PK, SK>({ toDateString });
+    const replace = replaceConstructor<Schema, PK, SK>({ toDate });
 
     const input = reducers({
       key,
@@ -38,6 +37,6 @@ export function updateConstructor<Schema, PK extends keyof Schema, SK extends ke
 
     const { Attributes } = await client.update(input).promise();
 
-    return usefulObjectMapper(fromDateString)(Attributes);
+    return usefulObjectMapper(fromDate, validateDate)(Attributes);
   };
 }

@@ -4,6 +4,7 @@ import { Operation, OperationProps } from "../types/operation";
 import { fold } from "../common/fold";
 import { replaceConstructor } from "../reducers/replace";
 import { withError } from "./with_error";
+import { getDateMappers } from "../mappers/date_mappers";
 
 export type RemoveReducers<Schema, PK extends keyof Schema, SK extends keyof Schema> = {
   key: KeyReducer<Schema, PK, SK>;
@@ -19,12 +20,12 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
   ...[client, name, option]: OperationProps
 ): RemoveOperation<Schema, PK, SK> {
   return async (builder) => {
-    const toDateString = option?.toDateString ?? ((value) => value.toISOString());
+    const { toDate } = getDateMappers(option);
 
-    const key = keyConstructor<Schema, PK, SK>({ toDateString });
+    const key = keyConstructor<Schema, PK, SK>({ toDate });
 
     await withError(() => {
-      const replace = replaceConstructor({ toDateString });
+      const replace = replaceConstructor({ toDate });
 
       if (option?.soft) {
         const input = [

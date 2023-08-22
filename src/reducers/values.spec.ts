@@ -8,10 +8,10 @@ describe("ValueReducer", () => {
   };
 
   test("should parse", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
     const values = valuesConstructor<User>({
-      toDateString,
+      toDate,
     });
 
     const result = values({

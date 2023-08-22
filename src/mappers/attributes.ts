@@ -20,7 +20,7 @@ export function attributeNamesReducer() {
  * Map an object to the form that is acceptable for [`ExpressionAttributeValues`]
  * It affects the way to read a table.
  */
-export function attributeValuesReducer(toDateString: (value: Date) => string, index?: number) {
+export function attributeValuesReducer(toDate: (value: Date) => string, index?: number) {
   return function reducer(acc: any, [key, value]: any): any {
     const puttable = toPuttable(value);
 
@@ -31,13 +31,13 @@ export function attributeValuesReducer(toDateString: (value: Date) => string, in
     if (puttable instanceof MultiPuttable) {
       return {
         ...(acc ?? {}),
-        ...puttable.values.map((e) => [key, e]).reduce((pre, curr, i) => attributeValuesReducer(toDateString, i)(pre, curr), {}),
+        ...puttable.values.map((e) => [key, e]).reduce((pre, curr, i) => attributeValuesReducer(toDate, i)(pre, curr), {}),
       };
     }
 
     return {
       ...(acc ?? {}),
-      [preffix(":")(index === undefined ? key : `${key}_${index}`)]: acceptableValueMapper(toDateString)(puttable.value),
+      [preffix(":")(index === undefined ? key : `${key}_${index}`)]: acceptableValueMapper(toDate)(puttable.value),
     };
   };
 }

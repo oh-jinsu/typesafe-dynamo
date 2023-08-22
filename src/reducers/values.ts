@@ -3,7 +3,7 @@ import { acceptableObjectMapper } from "../mappers/acceptable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => any;
 };
 
 export type ValuesReducer<Schema> = (params: Schema) => ReducerSlice<DynamoDB.PutItemInput, "Item">;
@@ -23,12 +23,12 @@ export type ValuesReducer<Schema> = (params: Schema) => ReducerSlice<DynamoDB.Pu
  *
  * ```
  */
-export function valuesConstructor<Schema>({ toDateString }: Context): ValuesReducer<Schema> {
+export function valuesConstructor<Schema>({ toDate }: Context): ValuesReducer<Schema> {
   return (params) =>
     ({ Item }) => ({
       Item: {
         ...(Item ?? {}),
-        ...acceptableObjectMapper(toDateString)({
+        ...acceptableObjectMapper(toDate)({
           ...params,
         }),
       },

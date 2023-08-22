@@ -3,7 +3,7 @@ import { acceptableObjectMapper } from "../mappers/acceptable";
 import { ReducerSlice } from "../types/reducer";
 
 type Context = {
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => any;
 };
 
 export type KeyReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
@@ -23,10 +23,10 @@ export type KeyReducer<Schema, PK extends keyof Schema, SK extends keyof Schema>
  *
  * ```
  */
-export function keyConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDateString }: Context): KeyReducer<Schema, PK, SK> {
+export function keyConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({ toDate }: Context): KeyReducer<Schema, PK, SK> {
   return (params) => {
     return () => ({
-      Key: acceptableObjectMapper(toDateString)(params),
+      Key: acceptableObjectMapper(toDate)(params),
     });
   };
 }

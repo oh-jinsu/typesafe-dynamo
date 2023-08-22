@@ -8,9 +8,9 @@ describe("FilterReducer", () => {
   };
 
   test("should parse", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const filter = filterConstructor<User, "id">({ toDateString });
+    const filter = filterConstructor<User, "id">({ toDate });
 
     const result = filter({
       name: "Jinsu",
@@ -32,9 +32,9 @@ describe("FilterReducer", () => {
   });
 
   test("should parse continuously", () => {
-    const toDateString = (value: Date) => value.toISOString();
+    const toDate = (value: Date) => value.toISOString();
 
-    const filter = filterConstructor<User, "id">({ toDateString });
+    const filter = filterConstructor<User, "id">({ toDate });
 
     const result = filter({
       createdAt: new Date("2023-01-01T00:00:00Z"),

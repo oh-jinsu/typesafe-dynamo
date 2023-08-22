@@ -7,7 +7,7 @@ describe("KeyReducer", () => {
   };
 
   test("should return a key property", () => {
-    const keyReducer = keyConstructor<User, "id", never>({ toDateString: (value) => value.toISOString() });
+    const keyReducer = keyConstructor<User, "id", never>({ toDate: (value) => value.toISOString() });
 
     const result = keyReducer({
       id: "uuid",

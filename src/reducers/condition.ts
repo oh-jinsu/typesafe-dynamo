@@ -6,7 +6,7 @@ import { ReducerSlice } from "../types/reducer";
 
 type Context = {
   indexName?: string;
-  toDateString: (value: Date) => string;
+  toDate: (value: Date) => any;
 };
 
 export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
@@ -28,7 +28,7 @@ export type ConditionReducer<Schema, PK extends keyof Schema, SK extends keyof S
  * ```
  */
 export function conditionConstructor<Schema, PK extends keyof Schema, SK extends keyof Schema>({
-  toDateString,
+  toDate,
   indexName,
 }: Context): ConditionReducer<Schema, PK, SK> {
   return (params) => {
@@ -36,7 +36,7 @@ export function conditionConstructor<Schema, PK extends keyof Schema, SK extends
       IndexName: indexName,
       KeyConditionExpression: Object.entries(params).reduce(expressionReducer(" and "), KeyConditionExpression),
       ExpressionAttributeNames: Object.entries(params).reduce(attributeNamesReducer(), ExpressionAttributeNames),
-      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDateString), ExpressionAttributeValues),
+      ExpressionAttributeValues: Object.entries(params).reduce(attributeValuesReducer(toDate), ExpressionAttributeValues),
     });
   };
 }

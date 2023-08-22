@@ -2,18 +2,23 @@ import { DynamoDB } from "aws-sdk";
 import { InputList } from "./input_list";
 import { Builder } from "./builder";
 
-export type OperationOption = {
-  toDateString?: (value: Date) => string;
-  fromDateString?: (value: string) => Date;
-} & (HardOperationOption | SoftOperationOption<string>);
+export type OperationOption<DateFormat = string> = DateFormatOption<DateFormat> & (HardOperationOption | SoftOperationOption);
+
+export type DateFormatOption<DateFormat = string> = {
+  dateFormat?: {
+    toDate: (value: Date) => DateFormat;
+    validateDate: (value: unknown) => boolean;
+    fromDate: (value: DateFormat) => Date;
+  };
+};
 
 export type HardOperationOption = {
   soft: false;
 };
 
-export type SoftOperationOption<DeleteDateColumn extends string> = {
+export type SoftOperationOption = {
   soft: true;
-  deleteDateColumn: DeleteDateColumn;
+  deleteDateColumn: string;
 };
 
 export type OperationProps = [client: DynamoDB.DocumentClient, name: string, option?: OperationOption];

@@ -3,18 +3,18 @@ import { mapper } from "./map";
 /**
  * Map a value to the form that is acceptable for [`DynamoDB.DocumentClient`]
  */
-export function acceptableValueMapper(toDateString: (value: Date) => string) {
+export function acceptableValueMapper<DateFormat>(toDate: (value: Date) => DateFormat) {
   return (value: any): any => {
     if (value === null || typeof value === "undefined") {
       return null;
     }
 
     if (value instanceof Date) {
-      return toDateString(value);
+      return toDate(value);
     }
 
     if (value.constructor === Object) {
-      return `Object ${JSON.stringify(value)}`;
+      return acceptableObjectMapper(toDate)(value);
     }
 
     return value;
@@ -25,6 +25,6 @@ export function acceptableValueMapper(toDateString: (value: Date) => string) {
  * Map an object to the form that is acceptable for [`DynamoDB.DocumentClient`]
  * It affects the way to write a data in table.
  */
-export function acceptableObjectMapper(toDateString: (value: Date) => string) {
-  return mapper(([key, value]) => [key, acceptableValueMapper(toDateString)(value)]);
+export function acceptableObjectMapper<DateFormat>(toDate: (value: Date) => DateFormat) {
+  return mapper(([key, value]) => [key, acceptableValueMapper(toDate)(value)]);
 }

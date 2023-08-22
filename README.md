@@ -144,19 +144,22 @@ You can configure some options too. Check out the `OperationOption` type.
 ```ts
 export type OperationOption = {
   soft?: boolean;
-  toDateString?: (value: Date) => string;
-  fromDateString?: (value: string) => Date;
+  deleteDateColumn?: string;
+  dateFormat?: {
+    toDate: (value: Date) => string;
+    validateDate: (value: unknown) => boolean;
+    fromDate: (value: string) => Date;
+  }
 }
 ```
 
-If `soft` is true, the delete operation won't delete an item in your DynamoDB table. Of course you can not find the item by other operations though.
+If `soft` is true, the delete operation won't delete an item in your DynamoDB table. Of course you can not find the item by other operations though. Note that you should set `deleteDateColumn` by a colum name so that the operations can judge if it has been deleted by the name.
 
-Also, you can configure how your `Date` type field is saved in your DynamoDB table by `toDateString` and `fromDateString` parameters.  
-**Note that these parameters won't work for now because the internal date validator allows only ISO8601 now. I'll fix it soon.**
+Also, you can configure how your `Date` type field is saved in your DynamoDB table by `toDate`, `fromDate` and `validateDate` parameters. By default, it saves a date as a ISO8610 date string.
 
 Check out an example using options:
 ```ts
-const table = typesafe<UserSchema, PK, SK, GSI>(client, name, { soft: true })
+const table = typesafe<UserSchema, PK, SK, GSI>(client, name, { soft: true, deleteDateColumn: "deletedAt" })
 ```
 
 ## Operations
