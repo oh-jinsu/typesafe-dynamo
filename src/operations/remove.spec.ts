@@ -29,6 +29,7 @@ describe("Remove operation", () => {
         id,
         name: "generated-user",
         age: 25,
+        createdAt: new Date(),
       }),
     ]);
 
@@ -62,11 +63,11 @@ describe("Soft remove operation", () => {
     createdAt: Date;
   };
 
-  const get = getConstructor<User, "id", "name">(client, "test", { soft: true });
+  const get = getConstructor<User, "id", "name">(client, "test", { soft: true, deleteDateColumn: "deletedAt" });
 
   const put = putConstructor<User>(client, "test");
 
-  const remove = removeConstructor<User, "id", "name">(client, "test", { soft: true });
+  const remove = removeConstructor<User, "id", "name">(client, "test", { soft: true, deleteDateColumn: "deletedAt" });
 
   const id = `id${new Date().getTime()}`;
 
@@ -76,6 +77,7 @@ describe("Soft remove operation", () => {
         id,
         name: "generated-user",
         age: 25,
+        createdAt: new Date(),
       }),
     ]);
 

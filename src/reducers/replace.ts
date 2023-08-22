@@ -1,7 +1,6 @@
 import { DynamoDB } from "aws-sdk";
 import { attributeNamesReducer, attributeValuesReducer } from "../mappers/attributes";
 import { expressionReducer } from "../mappers/expression";
-import { DateColumnList } from "../types/date_column_list";
 import { PuttableRecordOf } from "../types/puttable";
 import { ReducerSlice } from "../types/reducer";
 
@@ -10,7 +9,7 @@ type Context = {
 };
 
 export type ReplaceReducer<Schema, PK extends keyof Schema, SK extends keyof Schema> = (
-  params: PuttableRecordOf<Partial<Omit<Schema, PK | SK | DateColumnList>>>,
+  params: PuttableRecordOf<Partial<Omit<Schema, PK | SK>>>,
 ) => ReducerSlice<DynamoDB.UpdateItemInput, "UpdateExpression" | "ExpressionAttributeNames" | "ExpressionAttributeValues">;
 
 /**
@@ -35,7 +34,6 @@ export function replaceConstructor<Schema, PK extends keyof Schema, SK extends k
   return (params) => {
     return ({ UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues }) => {
       const entries = Object.entries({
-        updatedAt: new Date(),
         ...params,
       });
 

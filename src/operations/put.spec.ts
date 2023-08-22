@@ -23,6 +23,7 @@ describe("PutOperation", () => {
         id,
         name: "generated-user",
         age: 25,
+        createdAt: new Date(),
       }),
     ]);
 

@@ -17,13 +17,12 @@ describe("ValueReducer", () => {
     const result = values({
       id: "id",
       name: "name",
+      createdAt: new Date(),
     })({});
 
     expect(result.Item.id).toBe("id");
 
     expect(result.Item.name).toBe("name");
-
-    expect(result.Item.updatedAt).toBeDefined();
 
     expect(result.Item.createdAt).toBeDefined();
   });

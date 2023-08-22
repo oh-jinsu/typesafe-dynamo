@@ -61,6 +61,7 @@ describe("Query operation", () => {
         values({
           id,
           name,
+          createdAt: new Date(),
         }),
       ]);
 
@@ -116,11 +117,11 @@ describe("Soft query operation", () => {
     createdAt: Date;
   };
 
-  const query = queryConstructor<User, "id", "name">(client, "test", { soft: true });
+  const query = queryConstructor<User, "id", "name">(client, "test", { soft: true, deleteDateColumn: "deletedAt" });
 
   const put = putConstructor<User>(client, "test");
 
-  const remove = removeConstructor<User, "id", "name">(client, "test", { soft: true });
+  const remove = removeConstructor<User, "id", "name">(client, "test", { soft: true, deleteDateColumn: "deletedAt" });
 
   test("should remove an object", async () => {
     const id = `id${new Date().getTime()}`;
@@ -131,6 +132,7 @@ describe("Soft query operation", () => {
       values({
         id,
         name,
+        createdAt: new Date(),
       }),
     ]);
 

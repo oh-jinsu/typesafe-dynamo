@@ -13,17 +13,13 @@ describe("BuildMockPut", () => {
   test("should return the passed id", async () => {
     const put = jest.fn<ReturnType<TestOperation>, Parameters<TestOperation>>();
 
-    put.mockImplementation(
-      buildMockPut(({ values }) => ({
-        ...values[0],
-        createdAt: new Date(),
-      })),
-    );
+    put.mockImplementation(buildMockPut(({ values }) => values[0]));
 
     const result = await put(({ values }) => [
       values({
         id: "uuid",
         name: "Jinsu",
+        createdAt: new Date(),
       }),
     ]);
 

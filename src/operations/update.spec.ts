@@ -32,6 +32,7 @@ describe("UpdateOperation", () => {
         birth: {
           at: new Date(),
         },
+        createdAt: new Date(),
       }),
     ]);
 
@@ -68,6 +69,7 @@ describe("UpdateOperation", () => {
         birth: {
           at: new Date(),
         },
+        createdAt: new Date(),
       }),
     ]);
 

@@ -24,12 +24,14 @@ export function removeConstructor<Schema, PK extends keyof Schema, SK extends ke
     const key = keyConstructor<Schema, PK, SK>({ toDateString });
 
     await withError(() => {
+      const replace = replaceConstructor({ toDateString });
+
       if (option?.soft) {
         const input = [
           ...builder({
             key,
           }),
-          replaceConstructor({ toDateString })({
+          replace({
             deletedAt: new Date(),
           }),
         ].reduce(fold, {
